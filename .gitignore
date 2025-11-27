@@ -20,9 +20,16 @@ data/
 *.db
 *.sqlite
 
+# Backups
+backup_*.sql
+
 # OS
 .DS_Store
 Thumbs.db
 
 # Config
 config/connections.yaml
+
+# Docker
+docker-compose.override.yml
+.env.local

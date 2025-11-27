@@ -2,6 +2,31 @@
 
 Sistema de Extracción, Carga y Transformación (ELT) similar a Airbyte, diseñado para extraer datos de diversas plataformas y cargarlos en bases de datos MySQL.
 
+## 🐳 Inicio Rápido con Docker (Recomendado)
+
+```bash
+# 1. Clonar repositorio
+git clone <repository-url>
+cd ELTMKO
+
+# 2. Configurar credenciales
+cp .env.docker .env
+nano .env  # Editar con tus credenciales de Facebook Ads
+
+# 3. Verificar sistema (opcional)
+./docker-verify.sh
+
+# 4. Iniciar
+./docker-start.sh
+
+# 5. Abrir navegador
+# http://localhost:5000
+```
+
+**¡Listo en 2 minutos!** ⚡
+
+📖 **Más información**: [Guía Docker Completa](docs/DOCKER.md) | [Quick Start](DOCKER_QUICKSTART.md)
+
 ## 🚀 Características
 
 - **Extracción de Datos**: Conectores para extraer datos de múltiples plataformas
@@ -22,27 +47,64 @@ Sistema de Extracción, Carga y Transformación (ELT) similar a Airbyte, diseña
 
 ## 🛠️ Instalación
 
-### 1. Clonar el repositorio
+### Opción 1: Con Docker (Recomendado) 🐳
+
+La forma más rápida de empezar. Docker se encarga de todo: base de datos, aplicación y dependencias.
+
+```bash
+# 1. Clonar el repositorio
+git clone <repository-url>
+cd ELTMKO
+
+# 2. Configurar credenciales
+cp .env.docker .env
+# Editar .env con tus credenciales de Facebook Ads
+
+# 3. Iniciar el sistema
+./docker-start.sh
+```
+
+¡Listo! Abre http://localhost:5000 en tu navegador.
+
+#### Comandos Docker útiles:
+
+```bash
+# Ver logs en tiempo real
+docker-compose logs -f
+
+# Detener el sistema
+./docker-stop.sh
+
+# Ejecutar pipeline manualmente
+./docker-run-pipeline.sh
+
+# Iniciar con worker de sincronización automática
+docker-compose --profile worker up -d
+```
+
+### Opción 2: Instalación Manual
+
+#### 1. Clonar el repositorio
 
 ```bash
 git clone <repository-url>
 cd ELTMKO
 ```
 
-### 2. Crear entorno virtual
+#### 2. Crear entorno virtual
 
 ```bash
 python -m venv venv
 source venv/bin/activate  # En Windows: venv\Scripts\activate
 ```
 
-### 3. Instalar dependencias
+#### 3. Instalar dependencias
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Configurar variables de entorno
+#### 4. Configurar variables de entorno
 
 ```bash
 cp .env.example .env
@@ -69,7 +131,18 @@ API_HOST=0.0.0.0
 API_PORT=5000
 ```
 
-### 5. Configurar pipelines
+#### 5. Instalar y configurar MySQL
+
+```bash
+# Instalar MySQL (Ubuntu/Debian)
+sudo apt-get install mysql-server
+
+# Crear base de datos
+mysql -u root -p
+CREATE DATABASE elt_data;
+```
+
+#### 6. Configurar pipelines
 
 Editar `config/config.yaml` para configurar tus fuentes y destinos:
 
@@ -107,7 +180,27 @@ sources:
 
 ## 🎯 Uso
 
-### Modo 1: Ejecución única
+### Con Docker 🐳
+
+#### Opción 1: Interfaz Web (Recomendado)
+```bash
+./docker-start.sh
+# Abrir http://localhost:5000
+```
+
+#### Opción 2: Ejecutar pipeline una vez
+```bash
+./docker-run-pipeline.sh
+```
+
+#### Opción 3: Worker con sincronización automática
+```bash
+docker-compose --profile worker up -d
+```
+
+### Sin Docker (Instalación Manual)
+
+#### Modo 1: Ejecución única
 
 Ejecutar todos los pipelines una vez:
 
@@ -115,7 +208,7 @@ Ejecutar todos los pipelines una vez:
 python main.py --mode once
 ```
 
-### Modo 2: Ejecución programada
+#### Modo 2: Ejecución programada
 
 Ejecutar pipelines continuamente según intervalos configurados:
 
@@ -123,7 +216,7 @@ Ejecutar pipelines continuamente según intervalos configurados:
 python main.py --mode scheduled
 ```
 
-### Modo 3: API Web con interfaz
+#### Modo 3: API Web con interfaz
 
 Iniciar servidor web con panel de control:
 
@@ -132,6 +225,73 @@ python api.py
 ```
 
 Luego abrir en el navegador: `http://localhost:5000`
+
+## 🐳 Arquitectura Docker
+
+El sistema utiliza 3 servicios en Docker:
+
+1. **MySQL**: Base de datos para almacenar los datos extraídos
+2. **ELT-API**: Servidor web con interfaz de control
+3. **ELT-Worker**: (Opcional) Sincronización automática programada
+
+```
+┌─────────────┐      ┌──────────────┐      ┌────────────────┐
+│             │      │              │      │                │
+│   MySQL     │◄─────│   ELT-API    │◄─────│   Navegador    │
+│  (Puerto    │      │  (Puerto     │      │  (localhost:   │
+│   3306)     │      │   5000)      │      │    5000)       │
+│             │      │              │      │                │
+└─────────────┘      └──────────────┘      └────────────────┘
+       ▲
+       │
+       │
+┌──────┴──────┐
+│             │
+│ ELT-Worker  │
+│ (Opcional)  │
+│             │
+└─────────────┘
+```
+
+### Volúmenes Docker
+
+Los datos persisten en volúmenes Docker:
+- `mysql_data`: Datos de la base de datos
+- `./config`: Configuraciones
+- `./logs`: Logs del sistema
+
+## 🔧 Configuración Docker
+
+### Variables de entorno
+
+Editar `.env` para configurar:
+
+```env
+# MySQL
+MYSQL_USER=eltuser
+MYSQL_PASSWORD=eltpassword
+MYSQL_DATABASE=elt_data
+
+# Facebook Ads (requerido)
+FACEBOOK_APP_ID=tu_app_id
+FACEBOOK_APP_SECRET=tu_app_secret
+FACEBOOK_ACCESS_TOKEN=tu_token
+FACEBOOK_AD_ACCOUNT_ID=act_tu_account
+
+# API
+API_PORT=5000
+```
+
+### Personalizar docker-compose.yml
+
+Para cambiar puertos o configuraciones, editar `docker-compose.yml`:
+
+```yaml
+services:
+  elt-api:
+    ports:
+      - "8080:5000"  # Cambiar puerto externo
+```
 
 ## 🌐 API REST
 
@@ -267,7 +427,51 @@ Todas las tablas incluyen columnas de metadatos:
 
 ## 🐛 Solución de Problemas
 
-### Error de conexión a MySQL
+### Con Docker
+
+#### El contenedor MySQL no inicia
+```bash
+# Ver logs de MySQL
+docker-compose logs mysql
+
+# Reiniciar contenedor
+docker-compose restart mysql
+
+# Eliminar y recrear volumen (⚠️ elimina datos)
+docker-compose down -v
+docker-compose up -d
+```
+
+#### Error "Cannot connect to MySQL"
+```bash
+# Verificar que MySQL esté saludable
+docker-compose ps
+
+# Esperar más tiempo para que MySQL inicie
+docker-compose logs -f mysql
+```
+
+#### Cambiar puerto de la API
+Editar `.env`:
+```env
+API_PORT=8080
+```
+
+#### Ver logs en tiempo real
+```bash
+# Todos los servicios
+docker-compose logs -f
+
+# Solo API
+docker-compose logs -f elt-api
+
+# Solo MySQL
+docker-compose logs -f mysql
+```
+
+### Sin Docker
+
+#### Error de conexión a MySQL
 
 ```bash
 # Verificar que MySQL esté corriendo
