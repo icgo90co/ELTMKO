@@ -205,6 +205,215 @@
             color: #7f8c8d;
             margin-top: 5px;
         }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 0;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #ecf0f1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            color: #2c3e50;
+        }
+
+        .close {
+            color: #95a5a6;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .close:hover {
+            color: #2c3e50;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="password"],
+        .form-group input[type="number"],
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group textarea {
+            min-height: 80px;
+            resize: vertical;
+            font-family: monospace;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .form-group input[type="checkbox"] {
+            margin-right: 8px;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .form-actions button {
+            flex: 1;
+        }
+
+        .table-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .table-item {
+            padding: 15px;
+            border: 1px solid #ecf0f1;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .table-info {
+            flex: 1;
+        }
+
+        .table-name {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .table-description {
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+
+        .table-fields {
+            font-size: 11px;
+            color: #95a5a6;
+            margin-top: 5px;
+        }
+
+        .sync-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            display: none;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: #27ae60;
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+
+        .data-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .stat-card {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+        }
+
+        .stat-card.success {
+            border-left-color: #27ae60;
+        }
+
+        .stat-card.warning {
+            border-left-color: #f39c12;
+        }
+
+        .stat-card.danger {
+            border-left-color: #e74c3c;
+        }
     </style>
 </head>
 <body>
@@ -229,13 +438,116 @@
 
         <div class="grid">
             <div class="section">
-                <div class="section-title">📥 Fuentes de Datos</div>
+                <div class="section-title">
+                    <span>📥 Fuentes de Datos</span>
+                    <button class="btn btn-primary" onclick="openConfigModal()">⚙️ Configurar</button>
+                </div>
                 <div id="sources" class="loading">Cargando fuentes...</div>
             </div>
 
             <div class="section">
-                <div class="section-title">📤 Destinos</div>
+                <div class="section-title">
+                    <span>📤 Destinos</span>
+                    <button class="btn btn-primary" onclick="openDestinationModal()">⚙️ Configurar</button>
+                </div>
                 <div id="destinations" class="loading">Cargando destinos...</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">
+                <span>📋 Tablas Disponibles para Sincronizar</span>
+                <button class="btn btn-secondary" onclick="loadAvailableTables()">🔄 Actualizar</button>
+            </div>
+            <div id="available-tables" class="loading">Cargando tablas disponibles...</div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">📊 Datos Sincronizados</div>
+            <div id="synced-data" class="loading">Cargando estadísticas...</div>
+        </div>
+    </div>
+
+    <!-- Modal de Configuración de Fuentes -->
+    <div id="configModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>⚙️ Configuración de Facebook Ads</h2>
+                <span class="close" onclick="closeConfigModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="configForm">
+                    <div class="form-group">
+                        <label>App ID:</label>
+                        <input type="text" id="appId" placeholder="Tu Facebook App ID" required>
+                    </div>
+                    <div class="form-group">
+                        <label>App Secret:</label>
+                        <input type="password" id="appSecret" placeholder="Tu Facebook App Secret" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Access Token:</label>
+                        <textarea id="accessToken" placeholder="Tu Access Token de Facebook" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Ad Account ID:</label>
+                        <input type="text" id="adAccountId" placeholder="act_123456789" required>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="enableSource" checked>
+                            Activar esta fuente
+                        </label>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">💾 Guardar Configuración</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeConfigModal()">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Configuración de Destinos -->
+    <div id="destinationModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>⚙️ Configuración de MySQL</h2>
+                <span class="close" onclick="closeDestinationModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="destinationForm">
+                    <div class="form-group">
+                        <label>Host:</label>
+                        <input type="text" id="mysqlHost" placeholder="localhost o mysql" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Puerto:</label>
+                        <input type="number" id="mysqlPort" placeholder="3306" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Usuario:</label>
+                        <input type="text" id="mysqlUser" placeholder="eltuser" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Contraseña:</label>
+                        <input type="password" id="mysqlPassword" placeholder="Tu contraseña MySQL" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Base de Datos:</label>
+                        <input type="text" id="mysqlDatabase" placeholder="elt_data" required>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="enableDestination" checked>
+                            Activar este destino
+                        </label>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">💾 Guardar Configuración</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeDestinationModal()">Cancelar</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -433,10 +745,225 @@
             loadPipelines();
             loadSources();
             loadDestinations();
+            loadAvailableTables();
+            loadSyncedData();
         }
 
         // Load data on page load
         document.addEventListener('DOMContentLoaded', loadData);
+
+        // Modal functions
+        function openConfigModal() {
+            document.getElementById('configModal').style.display = 'block';
+            loadCurrentConfig();
+        }
+
+        function closeConfigModal() {
+            document.getElementById('configModal').style.display = 'none';
+        }
+
+        function openDestinationModal() {
+            document.getElementById('destinationModal').style.display = 'block';
+            loadCurrentDestinationConfig();
+        }
+
+        function closeDestinationModal() {
+            document.getElementById('destinationModal').style.display = 'none';
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const configModal = document.getElementById('configModal');
+            const destModal = document.getElementById('destinationModal');
+            if (event.target == configModal) {
+                closeConfigModal();
+            }
+            if (event.target == destModal) {
+                closeDestinationModal();
+            }
+        }
+
+        async function loadCurrentConfig() {
+            try {
+                const result = await apiCall('/api/sources/facebook_ads');
+                if (result.success && result.data) {
+                    const config = result.data.config || {};
+                    document.getElementById('appId').value = config.app_id || '';
+                    document.getElementById('appSecret').value = config.app_secret || '';
+                    document.getElementById('accessToken').value = config.access_token || '';
+                    document.getElementById('adAccountId').value = config.ad_account_id || '';
+                    document.getElementById('enableSource').checked = result.data.enabled || false;
+                }
+            } catch (error) {
+                console.error('Error loading config:', error);
+            }
+        }
+
+        async function loadCurrentDestinationConfig() {
+            try {
+                const result = await apiCall('/api/destinations/mysql_main');
+                if (result.success && result.data) {
+                    const config = result.data.config || {};
+                    document.getElementById('mysqlHost').value = config.host || 'mysql';
+                    document.getElementById('mysqlPort').value = config.port || 3306;
+                    document.getElementById('mysqlUser').value = config.user || '';
+                    document.getElementById('mysqlPassword').value = config.password || '';
+                    document.getElementById('mysqlDatabase').value = config.database || 'elt_data';
+                    document.getElementById('enableDestination').checked = result.data.enabled || false;
+                }
+            } catch (error) {
+                console.error('Error loading destination config:', error);
+            }
+        }
+
+        // Handle config form submission
+        document.getElementById('configForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const configData = {
+                app_id: document.getElementById('appId').value,
+                app_secret: document.getElementById('appSecret').value,
+                access_token: document.getElementById('accessToken').value,
+                ad_account_id: document.getElementById('adAccountId').value,
+                enabled: document.getElementById('enableSource').checked
+            };
+
+            try {
+                showAlert('Guardando configuración...', 'success');
+                const result = await apiCall('/api/sources/facebook_ads/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(configData)
+                });
+
+                if (result.success) {
+                    showAlert('Configuración guardada exitosamente', 'success');
+                    closeConfigModal();
+                    loadData();
+                } else {
+                    showAlert('Error al guardar configuración: ' + (result.error || 'Error desconocido'), 'error');
+                }
+            } catch (error) {
+                showAlert('Error: ' + error.message, 'error');
+            }
+        });
+
+        // Handle destination form submission
+        document.getElementById('destinationForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const configData = {
+                host: document.getElementById('mysqlHost').value,
+                port: parseInt(document.getElementById('mysqlPort').value),
+                user: document.getElementById('mysqlUser').value,
+                password: document.getElementById('mysqlPassword').value,
+                database: document.getElementById('mysqlDatabase').value,
+                enabled: document.getElementById('enableDestination').checked
+            };
+
+            try {
+                showAlert('Guardando configuración...', 'success');
+                const result = await apiCall('/api/destinations/mysql_main/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(configData)
+                });
+
+                if (result.success) {
+                    showAlert('Configuración guardada exitosamente', 'success');
+                    closeDestinationModal();
+                    loadData();
+                } else {
+                    showAlert('Error al guardar configuración: ' + (result.error || 'Error desconocido'), 'error');
+                }
+            } catch (error) {
+                showAlert('Error: ' + error.message, 'error');
+            }
+        });
+
+        async function loadAvailableTables() {
+            try {
+                const result = await apiCall('/api/tables/available');
+                const container = document.getElementById('available-tables');
+                
+                if (!result.success || !result.data || result.data.length === 0) {
+                    container.innerHTML = '<div class="empty-state">No hay tablas disponibles</div>';
+                    return;
+                }
+
+                container.innerHTML = '<div class="table-list">' + result.data.map(table => `
+                    <div class="table-item">
+                        <div class="table-info">
+                            <div class="table-name">${table.name}</div>
+                            <div class="table-description">${table.description || 'Tabla de datos de Facebook Ads'}</div>
+                            <div class="table-fields">Campos: ${table.fields ? table.fields.join(', ') : 'N/A'}</div>
+                        </div>
+                        <div class="sync-toggle">
+                            <label class="toggle-switch">
+                                <input type="checkbox" ${table.enabled ? 'checked' : ''} 
+                                    onchange="toggleTable('${table.name}', this.checked)">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                `).join('') + '</div>';
+                
+            } catch (error) {
+                document.getElementById('available-tables').innerHTML = 
+                    `<div class="alert alert-error">Error: ${error.message}</div>`;
+            }
+        }
+
+        async function loadSyncedData() {
+            try {
+                const result = await apiCall('/api/data/stats');
+                const container = document.getElementById('synced-data');
+                
+                if (!result.success || !result.data) {
+                    container.innerHTML = '<div class="empty-state">No hay datos sincronizados</div>';
+                    return;
+                }
+
+                const stats = result.data;
+                container.innerHTML = '<div class="data-stats">' + 
+                    Object.keys(stats).map(table => {
+                        const stat = stats[table];
+                        return `
+                            <div class="stat-card ${stat.count > 0 ? 'success' : ''}">
+                                <div class="table-name">${table}</div>
+                                <div class="stat-value">${stat.count || 0}</div>
+                                <div class="stat-label">registros</div>
+                                ${stat.last_sync ? `<div class="table-description">Última sync: ${new Date(stat.last_sync).toLocaleString()}</div>` : ''}
+                            </div>
+                        `;
+                    }).join('') + 
+                '</div>';
+                
+            } catch (error) {
+                document.getElementById('synced-data').innerHTML = 
+                    `<div class="alert alert-error">Error: ${error.message}</div>`;
+            }
+        }
+
+        async function toggleTable(tableName, enabled) {
+            try {
+                const result = await apiCall(`/api/tables/${tableName}/toggle`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ enabled })
+                });
+
+                if (result.success) {
+                    showAlert(`Tabla '${tableName}' ${enabled ? 'activada' : 'desactivada'}`, 'success');
+                } else {
+                    showAlert('Error al cambiar configuración', 'error');
+                    loadAvailableTables(); // Reload to reset
+                }
+            } catch (error) {
+                showAlert('Error: ' + error.message, 'error');
+                loadAvailableTables(); // Reload to reset
+            }
+        }
     </script>
 </body>
 </html>

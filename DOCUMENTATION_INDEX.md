@@ -9,6 +9,7 @@
 
 - **[README.md](README.md)** - Documentación general del sistema
 - **[docs/DOCKER.md](docs/DOCKER.md)** - Guía completa de Docker
+- **[WEB_INTERFACE_GUIDE.md](WEB_INTERFACE_GUIDE.md)** - Guía de la interfaz web
 
 ## 🔧 Referencias Técnicas
 
@@ -27,6 +28,7 @@
 1. Lee [DOCKER_QUICKSTART.md](DOCKER_QUICKSTART.md)
 2. Ejecuta `./docker-verify.sh`
 3. Ejecuta `./docker-start.sh`
+4. Abre http://localhost:5000 y lee [WEB_INTERFACE_GUIDE.md](WEB_INTERFACE_GUIDE.md)
 
 ### ¿Quieres entender la arquitectura?
 1. Lee [DOCKER_SUMMARY.md](DOCKER_SUMMARY.md)
@@ -71,6 +73,7 @@ ELTMKO/
 | Necesito... | Documento |
 |-------------|-----------|
 | Iniciar el sistema | [DOCKER_QUICKSTART.md](DOCKER_QUICKSTART.md) |
+| Usar la interfaz web | [WEB_INTERFACE_GUIDE.md](WEB_INTERFACE_GUIDE.md) |
 | Ver comandos Docker | [DOCKER_CHEATSHEET.md](DOCKER_CHEATSHEET.md) |
 | Entender arquitectura | [DOCKER_SUMMARY.md](DOCKER_SUMMARY.md) |
 | Desplegar en servidor | [DEPLOYMENT.md](DEPLOYMENT.md) |

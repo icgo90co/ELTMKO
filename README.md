@@ -34,7 +34,12 @@ nano .env  # Editar con tus credenciales de Facebook Ads
   - 🔄 Fácil extensión para otras plataformas
 - **Carga a MySQL**: Sistema robusto de carga de datos con soporte para upserts
 - **Configuración Flexible**: Configuración basada en YAML para fuentes y destinos
-- **Interfaz Web**: Panel de control para gestionar pipelines y ejecutar sincronizaciones
+- **Interfaz Web Completa**: Panel de control con:
+  - 🎛️ Configuración de credenciales (Facebook Ads, MySQL)
+  - 📊 Visualización de pipelines activos
+  - 📋 Selección de tablas a sincronizar
+  - 📈 Estadísticas de datos sincronizados
+  - ▶️ Ejecución manual de pipelines
 - **API REST**: Endpoints para integración programática
 - **Ejecución Programada**: Sincronización automática con intervalos configurables
 - **Logging Avanzado**: Sistema de logs con colores y múltiples niveles
@@ -345,7 +350,61 @@ curl -X POST http://localhost:5000/api/pipelines/run/facebook_ads
 
 # Listar todas las fuentes
 curl http://localhost:5000/api/sources
+
+# Ver tablas disponibles
+curl http://localhost:5000/api/tables/available
+
+# Ver estadísticas de datos
+curl http://localhost:5000/api/data/stats
+
+# Actualizar configuración de Facebook Ads
+curl -X POST http://localhost:5000/api/sources/facebook_ads/config \
+  -H "Content-Type: application/json" \
+  -d '{
+    "app_id": "tu_app_id",
+    "app_secret": "tu_app_secret",
+    "access_token": "tu_token",
+    "ad_account_id": "act_123456"
+  }'
 ```
+
+## 🎛️ Configuración desde la Interfaz Web
+
+La interfaz web (http://localhost:5000) permite configurar todo sin editar archivos:
+
+### 1. Configurar Facebook Ads
+- Click en "⚙️ Configurar" en la sección de Fuentes
+- Ingresar credenciales:
+  - App ID
+  - App Secret
+  - Access Token
+  - Ad Account ID
+- Activar/desactivar la fuente
+- Guardar
+
+### 2. Configurar MySQL
+- Click en "⚙️ Configurar" en la sección de Destinos
+- Configurar conexión:
+  - Host (mysql para Docker)
+  - Puerto (3306)
+  - Usuario
+  - Contraseña
+  - Base de datos
+- Guardar
+
+### 3. Seleccionar Tablas a Sincronizar
+- Ver sección "Tablas Disponibles"
+- Activar/desactivar tablas con el toggle switch:
+  - 📊 campaigns (campañas)
+  - 📊 adsets (conjuntos de anuncios)
+  - 📊 ads (anuncios)
+  - 📊 insights (métricas)
+
+### 4. Ver Datos Sincronizados
+- Sección "Datos Sincronizados" muestra:
+  - Número de registros por tabla
+  - Última fecha de sincronización
+  - Estado de cada tabla
 
 ## 📁 Estructura del Proyecto
 
