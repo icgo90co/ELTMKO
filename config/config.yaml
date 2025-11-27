@@ -1,0 +1,40 @@
+# ELT System Configuration
+
+destinations:
+  - name: "mysql_main"
+    type: "mysql"
+    enabled: true
+    config:
+      host: "${MYSQL_HOST}"
+      port: ${MYSQL_PORT}
+      user: "${MYSQL_USER}"
+      password: "${MYSQL_PASSWORD}"
+      database: "${MYSQL_DATABASE}"
+      
+sources:
+  - name: "facebook_ads"
+    type: "facebook_ads"
+    enabled: true
+    destination: "mysql_main"
+    config:
+      app_id: "${FACEBOOK_APP_ID}"
+      app_secret: "${FACEBOOK_APP_SECRET}"
+      access_token: "${FACEBOOK_ACCESS_TOKEN}"
+      ad_account_id: "${FACEBOOK_AD_ACCOUNT_ID}"
+    sync:
+      interval_minutes: 60
+      tables:
+        - name: "campaigns"
+          fields: ["id", "name", "status", "objective", "created_time", "updated_time"]
+        - name: "adsets"
+          fields: ["id", "name", "status", "campaign_id", "daily_budget", "lifetime_budget"]
+        - name: "ads"
+          fields: ["id", "name", "status", "adset_id", "creative"]
+        - name: "insights"
+          fields: ["date_start", "date_stop", "impressions", "clicks", "spend", "reach", "ctr", "cpc", "cpm"]
+          date_range: 30  # last 30 days
+
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "logs/elt.log"
