@@ -38,7 +38,8 @@ class FacebookAdsExtractor:
             app_secret = self.config.get('app_secret')
             access_token = self.config.get('access_token')
             
-            FacebookAdsApi.init(app_id, app_secret, access_token)
+            # Initialize API with latest version (v22.0)
+            FacebookAdsApi.init(app_id, app_secret, access_token, api_version='v22.0')
             self.api = FacebookAdsApi.get_default_api()
             
             ad_account_id = self.config.get('ad_account_id')

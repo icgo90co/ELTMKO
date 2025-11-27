@@ -10,7 +10,7 @@ mysql-connector-python==8.2.0
 SQLAlchemy==2.0.23
 
 # Facebook Ads
-facebook-business==18.0.0
+facebook-business==20.0.0
 
 # Data processing
 pandas==2.1.4
