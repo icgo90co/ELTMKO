@@ -29,7 +29,7 @@ sources:
         - name: "adsets"
           fields: ["id", "name", "status", "campaign_id", "daily_budget", "lifetime_budget"]
         - name: "ads"
-          fields: ["id", "name", "status", "adset_id", "creative"]
+          fields: ["id", "name", "status", "adset_id"]
         - name: "insights"
           level: "campaign"
           time_increment: "daily"
@@ -45,10 +45,8 @@ sources:
             "cpm",
             "frequency",
             "actions",
-            "video_views",
             "video_play_actions",
-            "inline_link_clicks",
-            "post_engagement"
+            "inline_link_clicks"
           ]
           date_range: 30  # last 30 days
 

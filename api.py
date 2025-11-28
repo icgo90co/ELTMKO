@@ -582,42 +582,23 @@ def insights_available_fields():
                 'action_values': {'label': 'Valor de Acciones', 'category': 'Valor', 'description': 'Valor monetario de las acciones'},
                 'conversion_values': {'label': 'Valor de Conversiones', 'category': 'Valor', 'description': 'Valor monetario de las conversiones'},
                 
-                # Métricas de Video
-                'video_views': {'label': 'Vistas de Video', 'category': 'Video', 'description': 'Número de visualizaciones de video'},
+                # Métricas de Video (válidas para /insights endpoint)
                 'video_play_actions': {'label': 'Reproducciones Video', 'category': 'Video', 'description': 'Acciones de reproducción de video'},
                 'video_avg_time_watched_actions': {'label': 'Tiempo Promedio Video', 'category': 'Video', 'description': 'Tiempo promedio de video visto en segundos'},
-                'video_play_retained_audience': {'label': 'Audiencia Retenida', 'category': 'Video', 'description': 'Audiencia que retuvo el video'},
+                'video_15_sec_watched_actions': {'label': 'Video 15s Visto', 'category': 'Video', 'description': 'Reproducciones de más de 15 segundos'},
+                'video_30_sec_watched_actions': {'label': 'Video 30s Visto', 'category': 'Video', 'description': 'Reproducciones de más de 30 segundos'},
+                'video_continuous_2_sec_watched_actions': {'label': 'Video 2s Continuo', 'category': 'Video', 'description': 'Reproducciones continuas de 2+ segundos'},
+                'video_thruplay_watched_actions': {'label': 'Thruplay Video', 'category': 'Video', 'description': 'Reproducciones hasta final'},
                 
-                # Métricas de Engagement
-                'post_engagement': {'label': 'Engagement Post', 'category': 'Engagement', 'description': 'Interacciones totales con el post'},
-                'inline_post_engagement': {'label': 'Engagement Inline', 'category': 'Engagement', 'description': 'Engagement directo en la plataforma'},
-                'post_clicks': {'label': 'Clics en Post', 'category': 'Engagement', 'description': 'Total de clics en el post'},
-                'post_impressions': {'label': 'Impresiones Post', 'category': 'Engagement', 'description': 'Impresiones totales del post'},
-                
-                # Métricas de Clics en Links
+                # Métricas de Clics en Links (válidas para /insights)
                 'inline_link_clicks': {'label': 'Clics en Enlace', 'category': 'Links', 'description': 'Clics en enlaces del anuncio'},
                 'inline_link_click_ctr': {'label': 'CTR Enlace', 'category': 'Links', 'description': 'Tasa de clics en enlaces'},
                 'cost_per_inline_link_click': {'label': 'Costo por Clic Enlace', 'category': 'Links', 'description': 'Costo promedio por clic en enlace'},
-                'cost_per_inline_post_engagement': {'label': 'Costo por Engagement', 'category': 'Links', 'description': 'Costo promedio por engagement'},
                 
-                # Métricas de Stories
-                'story_clicks': {'label': 'Clics en Stories', 'category': 'Stories', 'description': 'Clics en anuncios de stories'},
-                'story_impressions': {'label': 'Impresiones Stories', 'category': 'Stories', 'description': 'Impresiones en stories'},
-                'story_opens': {'label': 'Aperturas Stories', 'category': 'Stories', 'description': 'Aperturas de anuncios en stories'},
-                
-                # Métricas de Aplicación
-                'app_store_clicks': {'label': 'Clics a Tienda', 'category': 'Aplicación', 'description': 'Clics hacia la tienda de aplicaciones'},
-                'mobile_app_purchases': {'label': 'Compras en App', 'category': 'Aplicación', 'description': 'Compras realizadas en la aplicación'},
+                # Métricas de Aplicación (válidas para /insights)
                 'mobile_app_installs': {'label': 'Instalaciones App', 'category': 'Aplicación', 'description': 'Instalaciones de la aplicación'},
-                'cost_per_mobile_app_install': {'label': 'Costo por Instalación', 'category': 'Aplicación', 'description': 'Costo promedio por instalación'},
-                
-                # Métricas de Orgánico vs Pagado
-                'post_clicks_organic': {'label': 'Clics Orgánicos', 'category': 'Orgánico/Pagado', 'description': 'Clics orgánicos en el post'},
-                'post_clicks_paid': {'label': 'Clics Pagados', 'category': 'Orgánico/Pagado', 'description': 'Clics pagados en el post'},
-                'post_impressions_organic': {'label': 'Impresiones Orgánicas', 'category': 'Orgánico/Pagado', 'description': 'Impresiones orgánicas del post'},
-                'post_impressions_paid': {'label': 'Impresiones Pagadas', 'category': 'Orgánico/Pagado', 'description': 'Impresiones pagadas del post'},
-                'post_impressions_organic_unique': {'label': 'Alcance Orgánico Único', 'category': 'Orgánico/Pagado', 'description': 'Personas únicas que vieron orgánicamente'},
-                'post_impressions_paid_unique': {'label': 'Alcance Pagado Único', 'category': 'Orgánico/Pagado', 'description': 'Personas únicas que vieron por publicidad'},
+                'mobile_app_purchase_roas': {'label': 'ROAS Compras App', 'category': 'Aplicación', 'description': 'Retorno sobre inversión en compras dentro de app'},
+                'app_store_clicks': {'label': 'Clics a Tienda App', 'category': 'Aplicación', 'description': 'Clics hacia la tienda de aplicaciones'},
             },
             'time_increments': {
                 'daily': {'label': 'Diario', 'description': 'Un registro por día'},

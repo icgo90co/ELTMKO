@@ -143,9 +143,6 @@ class FacebookAdsExtractor:
                 Ad.Field.name,
                 Ad.Field.status,
                 Ad.Field.adset_id,
-                Ad.Field.creative,
-                Ad.Field.created_time,
-                Ad.Field.updated_time,
             ]
         
         try:
@@ -155,10 +152,8 @@ class FacebookAdsExtractor:
             data = []
             for ad in ads:
                 ad_dict = dict(ad)
-                # Flatten creative object if present
-                if 'creative' in ad_dict and isinstance(ad_dict['creative'], dict):
-                    ad_dict['creative_id'] = ad_dict['creative'].get('id')
-                    ad_dict.pop('creative', None)
+                # Remove complex objects that can't be stored in MySQL
+                ad_dict.pop('creative', None)
                 data.append(ad_dict)
             
             df = pd.DataFrame(data)
