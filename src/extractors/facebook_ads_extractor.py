@@ -3,6 +3,7 @@ Facebook Ads Extractor
 Extracts data from Facebook Ads API
 """
 import logging
+import json
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
 import pandas as pd
@@ -243,7 +244,18 @@ class FacebookAdsExtractor:
             
             data = []
             for insight in insights:
-                data.append(dict(insight))
+                insight_dict = dict(insight)
+                
+                # Clean up complex types (lists, dicts) - convert to JSON strings
+                for key, value in insight_dict.items():
+                    if isinstance(value, (list, dict)):
+                        # Convert complex types to JSON string
+                        try:
+                            insight_dict[key] = json.dumps(value)
+                        except:
+                            insight_dict[key] = str(value)
+                
+                data.append(insight_dict)
             
             df = pd.DataFrame(data)
             
