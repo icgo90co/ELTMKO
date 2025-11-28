@@ -533,6 +533,7 @@ def insights_config():
 def insights_available_fields():
     """Get available fields for insights"""
     try:
+        # Complete metrics available from Facebook Ads API
         available_fields = {
             'dimensions': {
                 'account': {
@@ -556,14 +557,69 @@ def insights_available_fields():
                 }
             },
             'metrics': {
-                'impressions': {'label': 'Impresiones', 'description': 'Número de veces que se mostró el anuncio'},
-                'clicks': {'label': 'Clics', 'description': 'Número de clics en el anuncio'},
-                'spend': {'label': 'Gasto', 'description': 'Cantidad invertida'},
-                'reach': {'label': 'Alcance', 'description': 'Número único de personas que vieron el anuncio'},
-                'ctr': {'label': 'CTR', 'description': 'Tasa de clics (porcentaje)'},
-                'cpc': {'label': 'CPC', 'description': 'Costo por clic'},
-                'cpm': {'label': 'CPM', 'description': 'Costo por mil impresiones'},
-                'frequency': {'label': 'Frecuencia', 'description': 'Número promedio de veces que se mostró a cada persona'}
+                # Métricas de Entrega
+                'impressions': {'label': 'Impresiones', 'category': 'Entrega', 'description': 'Número de veces que se mostró el anuncio'},
+                'clicks': {'label': 'Clics', 'category': 'Entrega', 'description': 'Número de clics en el anuncio'},
+                'reach': {'label': 'Alcance', 'category': 'Entrega', 'description': 'Número único de personas que vieron el anuncio'},
+                'frequency': {'label': 'Frecuencia', 'category': 'Entrega', 'description': 'Número promedio de veces que se mostró a cada persona'},
+                
+                # Métricas de Costo
+                'spend': {'label': 'Gasto', 'category': 'Costo', 'description': 'Cantidad invertida'},
+                'cpc': {'label': 'CPC', 'category': 'Costo', 'description': 'Costo por clic'},
+                'cpm': {'label': 'CPM', 'category': 'Costo', 'description': 'Costo por mil impresiones'},
+                'ctr': {'label': 'CTR', 'category': 'Costo', 'description': 'Tasa de clics (porcentaje)'},
+                
+                # Métricas de Conversión
+                'actions': {'label': 'Acciones', 'category': 'Conversión', 'description': 'Conversiones totales (compras, suscripciones, etc.)'},
+                'conversion_rate_ranking': {'label': 'Ranking de Conv.', 'category': 'Conversión', 'description': 'Ranking de tasa de conversión'},
+                'cost_per_action_type': {'label': 'Costo por Acción', 'category': 'Conversión', 'description': 'Costo promedio por tipo de acción'},
+                
+                # Métricas de Compras
+                'purchase_roas': {'label': 'ROAS (Compras)', 'category': 'Compras', 'description': 'Retorno sobre inversión en compras'},
+                'purchases': {'label': 'Compras', 'category': 'Compras', 'description': 'Número de compras generadas'},
+                'cost_per_purchase': {'label': 'Costo por Compra', 'category': 'Compras', 'description': 'Costo promedio por compra'},
+                
+                # Métricas de Leads
+                'leads': {'label': 'Leads', 'category': 'Leads', 'description': 'Número de leads generados'},
+                'cost_per_lead': {'label': 'Costo por Lead', 'category': 'Leads', 'description': 'Costo promedio por lead'},
+                
+                # Métricas de Engagement
+                'post_engagement': {'label': 'Engagement Post', 'category': 'Engagement', 'description': 'Interacciones con el post (likes, comentarios, etc.)'},
+                'inline_post_engagement': {'label': 'Engagement Inline', 'category': 'Engagement', 'description': 'Engagement directo en la plataforma'},
+                'story_clicks': {'label': 'Clics en Stories', 'category': 'Engagement', 'description': 'Clics en anuncios de stories'},
+                'story_impressions': {'label': 'Impresiones Stories', 'category': 'Engagement', 'description': 'Impresiones en stories'},
+                'story_opens': {'label': 'Aperturas Stories', 'category': 'Engagement', 'description': 'Aperturas de anuncios en stories'},
+                
+                # Métricas de Video
+                'video_views': {'label': 'Vistas de Video', 'category': 'Video', 'description': 'Número de visualizaciones de video'},
+                'video_play_actions': {'label': 'Reproducciones Video', 'category': 'Video', 'description': 'Acciones de reproducción de video'},
+                'video_avg_time_watched_actions': {'label': 'Tiempo Promedio Video', 'category': 'Video', 'description': 'Tiempo promedio de video visto en segundos'},
+                
+                # Métricas de Links
+                'inline_link_clicks': {'label': 'Clics en Enlace', 'category': 'Links', 'description': 'Clics en enlaces del anuncio'},
+                'inline_link_click_ctr': {'label': 'CTR Enlace', 'category': 'Links', 'description': 'Tasa de clics en enlaces'},
+                'cost_per_inline_link_click': {'label': 'Costo por Clic Enlace', 'category': 'Links', 'description': 'Costo promedio por clic en enlace'},
+                'cost_per_inline_post_engagement': {'label': 'Costo por Engagement', 'category': 'Links', 'description': 'Costo promedio por engagement'},
+                
+                # Métricas de Atribución
+                'action_values': {'label': 'Valor de Acciones', 'category': 'Atribución', 'description': 'Valor monetario de las acciones'},
+                'conversion_values': {'label': 'Valor de Conversiones', 'category': 'Atribución', 'description': 'Valor monetario de las conversiones'},
+                'roas': {'label': 'ROAS', 'category': 'Atribución', 'description': 'Retorno sobre inversión general'},
+                'value_per_conversion': {'label': 'Valor por Conversión', 'category': 'Atribución', 'description': 'Valor promedio por conversión'},
+                
+                # Métricas de Aplicación
+                'app_store_clicks': {'label': 'Clics a Tienda', 'category': 'Aplicación', 'description': 'Clics hacia la tienda de aplicaciones'},
+                'mobile_app_purchases': {'label': 'Compras en App', 'category': 'Aplicación', 'description': 'Compras realizadas en la aplicación'},
+                'mobile_app_installs': {'label': 'Instalaciones App', 'category': 'Aplicación', 'description': 'Instalaciones de la aplicación'},
+                'cost_per_mobile_app_install': {'label': 'Costo por Instalación', 'category': 'Aplicación', 'description': 'Costo promedio por instalación'},
+                
+                # Métricas Organícas vs Pagadas
+                'post_clicks_organic': {'label': 'Clics Orgánicos', 'category': 'Orgánico/Pagado', 'description': 'Clics orgánicos en el post'},
+                'post_clicks_paid': {'label': 'Clics Pagados', 'category': 'Orgánico/Pagado', 'description': 'Clics pagados en el post'},
+                'post_impressions_organic': {'label': 'Impresiones Orgánicas', 'category': 'Orgánico/Pagado', 'description': 'Impresiones orgánicas del post'},
+                'post_impressions_paid': {'label': 'Impresiones Pagadas', 'category': 'Orgánico/Pagado', 'description': 'Impresiones pagadas del post'},
+                'post_impressions_organic_unique': {'label': 'Alcance Orgánico Único', 'category': 'Orgánico/Pagado', 'description': 'Personas únicas que vieron orgánicamente'},
+                'post_impressions_paid_unique': {'label': 'Alcance Pagado Único', 'category': 'Orgánico/Pagado', 'description': 'Personas únicas que vieron por publicidad'},
             },
             'time_increments': {
                 'daily': {'label': 'Diario', 'description': 'Un registro por día'},

@@ -601,15 +601,10 @@
 
                     <div class="form-group">
                         <label>Métricas a Incluir:</label>
-                        <div id="metricsCheckboxes" style="display: grid; gap: 8px;">
-                            <label><input type="checkbox" name="metric" value="impressions" checked> Impresiones</label>
-                            <label><input type="checkbox" name="metric" value="clicks" checked> Clics</label>
-                            <label><input type="checkbox" name="metric" value="spend" checked> Gasto</label>
-                            <label><input type="checkbox" name="metric" value="reach" checked> Alcance</label>
-                            <label><input type="checkbox" name="metric" value="ctr" checked> CTR (Tasa de Clics)</label>
-                            <label><input type="checkbox" name="metric" value="cpc" checked> CPC (Costo por Clic)</label>
-                            <label><input type="checkbox" name="metric" value="cpm" checked> CPM (Costo por Mil)</label>
-                            <label><input type="checkbox" name="metric" value="frequency" checked> Frecuencia</label>
+                        <small style="color: #7f8c8d; display: block; margin-bottom: 10px;">Selecciona las métricas que deseas sincronizar (todas las opciones de Facebook Ads API v22.0):</small>
+                        <div id="metricsCheckboxes" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-height: 400px; overflow-y: auto; padding: 10px; border: 1px solid #ecf0f1; border-radius: 5px; background: #f8f9fa;">
+                            <!-- Será llenado dinámicamente por JavaScript -->
+                            <div style="grid-column: 1/-1; color: #7f8c8d; text-align: center;">Cargando métricas...</div>
                         </div>
                     </div>
 
@@ -1050,6 +1045,10 @@
 
         async function loadCurrentInsightsConfig() {
             try {
+                // Primero cargar las métricas disponibles
+                await loadAvailableMetrics();
+                
+                // Luego cargar la configuración actual
                 const result = await apiCall('/api/insights/config');
                 if (result.success && result.data) {
                     const config = result.data;
@@ -1064,10 +1063,71 @@
                         document.querySelectorAll('input[name="metric"]').forEach(checkbox => {
                             checkbox.checked = config.fields.includes(checkbox.value);
                         });
+                    } else {
+                        // Si no hay configuración previa, seleccionar las métricas básicas por defecto
+                        const defaultMetrics = ['impressions', 'clicks', 'spend', 'reach', 'ctr', 'cpc', 'cpm', 'frequency'];
+                        document.querySelectorAll('input[name="metric"]').forEach(checkbox => {
+                            checkbox.checked = defaultMetrics.includes(checkbox.value);
+                        });
                     }
                 }
             } catch (error) {
                 console.error('Error loading insights config:', error);
+            }
+        }
+
+        async function loadAvailableMetrics() {
+            try {
+                const result = await apiCall('/api/insights/available-fields');
+                if (result.success && result.data && result.data.metrics) {
+                    const metrics = result.data.metrics;
+                    const container = document.getElementById('metricsCheckboxes');
+                    
+                    // Agrupar métricas por categoría
+                    const groupedMetrics = {};
+                    Object.entries(metrics).forEach(([key, value]) => {
+                        const category = value.category || 'Otras';
+                        if (!groupedMetrics[category]) {
+                            groupedMetrics[category] = [];
+                        }
+                        groupedMetrics[category].push({ key, ...value });
+                    });
+                    
+                    // Crear HTML agrupado
+                    let html = '';
+                    const categoryOrder = ['Entrega', 'Costo', 'Conversión', 'Compras', 'Leads', 'Engagement', 'Video', 'Links', 'Atribución', 'Aplicación', 'Orgánico/Pagado', 'Otras'];
+                    
+                    categoryOrder.forEach(category => {
+                        if (groupedMetrics[category]) {
+                            html += `<div style="grid-column: 1/-1; font-weight: 600; color: #2c3e50; margin-top: 10px; padding-top: 10px; border-top: 1px solid #ddd;">${category}</div>`;
+                            groupedMetrics[category].forEach(metric => {
+                                const defaultMetrics = ['impressions', 'clicks', 'spend', 'reach', 'ctr', 'cpc', 'cpm', 'frequency'];
+                                const isChecked = defaultMetrics.includes(metric.key) ? 'checked' : '';
+                                html += `<label style="font-size: 13px; display: flex; align-items: center; gap: 8px; cursor: pointer;" title="${metric.description}">
+                                    <input type="checkbox" name="metric" value="${metric.key}" ${isChecked}>
+                                    <span>${metric.label}</span>
+                                    <span style="color: #95a5a6; font-size: 11px;">(${metric.key})</span>
+                                </label>`;
+                            });
+                        }
+                    });
+                    
+                    container.innerHTML = html;
+                }
+            } catch (error) {
+                console.error('Error loading available metrics:', error);
+                // Fallback to basic metrics if API fails
+                const container = document.getElementById('metricsCheckboxes');
+                container.innerHTML = `
+                    <label><input type="checkbox" name="metric" value="impressions" checked> Impresiones</label>
+                    <label><input type="checkbox" name="metric" value="clicks" checked> Clics</label>
+                    <label><input type="checkbox" name="metric" value="spend" checked> Gasto</label>
+                    <label><input type="checkbox" name="metric" value="reach" checked> Alcance</label>
+                    <label><input type="checkbox" name="metric" value="ctr" checked> CTR (Tasa de Clics)</label>
+                    <label><input type="checkbox" name="metric" value="cpc" checked> CPC (Costo por Clic)</label>
+                    <label><input type="checkbox" name="metric" value="cpm" checked> CPM (Costo por Mil)</label>
+                    <label><input type="checkbox" name="metric" value="frequency" checked> Frecuencia</label>
+                `;
             }
         }
 

@@ -40,6 +40,7 @@ nano .env  # Editar con tus credenciales de Facebook Ads
   - 📋 Selección de tablas a sincronizar
   - 📈 Estadísticas de datos sincronizados
   - ▶️ Ejecución manual de pipelines
+  - 🎯 **Selector dinámico de 50+ métricas de Facebook Ads API v22.0**
 - **API REST**: Endpoints para integración programática
 - **Ejecución Programada**: Sincronización automática con intervalos configurables
 - **Logging Avanzado**: Sistema de logs con colores y múltiples niveles
