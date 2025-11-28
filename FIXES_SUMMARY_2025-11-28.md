@@ -64,6 +64,22 @@
 
 ---
 
+### 5. ❌ Error "Unknown column 'nan' in 'SELECT'"
+**Error:** `1054 (42S22): Unknown column 'nan' in 'SELECT'`
+
+**Causa:** Algunos registros de Facebook tenían campos None/NULL. Pandas creaba columnas fantasma con nombres inválidos (como "nan"). MySQL intentaba insertar datos en columnas que no existen.
+
+**Solución:**
+- ✅ Mejorada limpieza de datos en `extract_insights()`
+- ✅ Salta valores None y claves None al procesar
+- ✅ Solo agrega registros que tengan al menos 1 campo válido
+- ✅ Limpia cualquier columna NaN después de crear el DataFrame
+- ✅ Valida nombres de columnas antes de insertar en MySQL
+
+**Archivos modificados:** `src/extractors/facebook_ads_extractor.py`
+
+---
+
 ## 📊 Resumen de Cambios
 
 | Problema | Archivo | Cambios |

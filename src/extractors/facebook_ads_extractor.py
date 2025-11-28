@@ -247,17 +247,34 @@ class FacebookAdsExtractor:
                 insight_dict = dict(insight)
                 
                 # Clean up complex types (lists, dicts) - convert to JSON strings
+                # Also remove any None values that might cause issues
+                cleaned_dict = {}
                 for key, value in insight_dict.items():
+                    # Skip None values and invalid column names
+                    if value is None or key is None or str(key).lower() == 'nan':
+                        continue
+                    
                     if isinstance(value, (list, dict)):
                         # Convert complex types to JSON string
                         try:
-                            insight_dict[key] = json.dumps(value)
+                            cleaned_dict[key] = json.dumps(value)
                         except:
-                            insight_dict[key] = str(value)
+                            cleaned_dict[key] = str(value)
+                    else:
+                        cleaned_dict[key] = value
                 
-                data.append(insight_dict)
+                if cleaned_dict:  # Only add if there are valid fields
+                    data.append(cleaned_dict)
+            
+            if not data:
+                logger.warning("No valid data extracted from insights")
+                return pd.DataFrame()
             
             df = pd.DataFrame(data)
+            
+            # Remove any NaN column names
+            df = df.loc[:, ~df.columns.isna()]
+            df = df.loc[:, df.columns.astype(str) != 'nan']
             
             # Convert numeric columns
             numeric_columns = ['impressions', 'clicks', 'spend', 'reach', 'frequency']
