@@ -1139,14 +1139,23 @@
                 document.querySelectorAll('input[name="metric"]:checked')
             ).map(cb => cb.value);
 
+            const startDate = document.getElementById('insightsStartDate').value;
+            const endDate = document.getElementById('insightsEndDate').value;
+            const dateRange = parseInt(document.getElementById('insightsDateRange').value) || 30;
+
             const configData = {
                 level: document.getElementById('insightsDimension').value,
                 time_increment: document.getElementById('insightsTimeIncrement').value,
-                start_date: document.getElementById('insightsStartDate').value || null,
-                end_date: document.getElementById('insightsEndDate').value || null,
-                date_range: parseInt(document.getElementById('insightsDateRange').value) || 30,
                 fields: selectedMetrics
             };
+
+            // Si el usuario especifica fechas, usar esas; si no, usar date_range
+            if (startDate && endDate) {
+                configData.start_date = startDate;
+                configData.end_date = endDate;
+            } else {
+                configData.date_range = dateRange;
+            }
 
             try {
                 showAlert('Guardando configuración de insights...', 'success');

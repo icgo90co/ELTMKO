@@ -497,12 +497,18 @@ def insights_config():
                             table['level'] = data.get('level', 'account')
                             table['time_increment'] = data.get('time_increment', 'daily')
                             
-                            if data.get('date_range'):
-                                table['date_range'] = data.get('date_range')
-                            if data.get('start_date'):
+                            # Si el usuario proporciona fechas específicas, usarlas
+                            if data.get('start_date') and data.get('end_date'):
                                 table['start_date'] = data.get('start_date')
-                            if data.get('end_date'):
                                 table['end_date'] = data.get('end_date')
+                                # Remover date_range si está usando fechas específicas
+                                table.pop('date_range', None)
+                            else:
+                                # Si no, usar date_range
+                                table['date_range'] = data.get('date_range', 30)
+                                # Remover start_date y end_date si está usando date_range
+                                table.pop('start_date', None)
+                                table.pop('end_date', None)
                             
                             if data.get('fields'):
                                 table['fields'] = data.get('fields')

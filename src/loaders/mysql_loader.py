@@ -160,6 +160,10 @@ class MySQLLoader:
             
             # Add unique key constraint
             self.create_table_if_not_exists(table_name, schema)
+            
+            # Add missing columns to existing table
+            self._add_missing_columns(table_name, schema)
+            
             self._ensure_unique_key(table_name, key_columns)
             
             # Prepare upsert query
@@ -224,6 +228,40 @@ class MySQLLoader:
             cursor.close()
         except Error as e:
             logger.warning(f"Could not ensure unique key on '{table_name}': {e}")
+    
+    def _add_missing_columns(self, table_name: str, schema: Dict[str, str]):
+        """
+        Add missing columns to existing table
+        
+        Args:
+            table_name: Table name
+            schema: Dictionary mapping column names to SQL types
+        """
+        try:
+            cursor = self.connection.cursor()
+            
+            # Get existing columns
+            cursor.execute(f"DESC `{table_name}`")
+            existing_columns = {row[0] for row in cursor.fetchall()}
+            
+            # Find missing columns
+            missing_columns = set(schema.keys()) - existing_columns
+            
+            # Add missing columns
+            for col_name in missing_columns:
+                col_type = schema[col_name]
+                alter_query = f"ALTER TABLE `{table_name}` ADD COLUMN `{col_name}` {col_type}"
+                
+                try:
+                    cursor.execute(alter_query)
+                    self.connection.commit()
+                    logger.info(f"Added column '{col_name}' to table '{table_name}'")
+                except Error as e:
+                    logger.warning(f"Could not add column '{col_name}' to '{table_name}': {e}")
+            
+            cursor.close()
+        except Error as e:
+            logger.warning(f"Could not check for missing columns on '{table_name}': {e}")
     
     def _infer_schema_from_dataframe(self, df: pd.DataFrame) -> Dict[str, str]:
         """
