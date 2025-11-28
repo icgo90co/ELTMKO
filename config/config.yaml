@@ -31,7 +31,25 @@ sources:
         - name: "ads"
           fields: ["id", "name", "status", "adset_id", "creative"]
         - name: "insights"
-          fields: ["date_start", "date_stop", "impressions", "clicks", "spend", "reach", "ctr", "cpc", "cpm"]
+          level: "campaign"
+          time_increment: "daily"
+          fields: [
+            "date_start",
+            "date_stop",
+            "impressions",
+            "clicks",
+            "spend",
+            "reach",
+            "ctr",
+            "cpc",
+            "cpm",
+            "frequency",
+            "actions",
+            "video_views",
+            "video_play_actions",
+            "inline_link_clicks",
+            "post_engagement"
+          ]
           date_range: 30  # last 30 days
 
 logging:
