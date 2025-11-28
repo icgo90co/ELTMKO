@@ -11,6 +11,19 @@
 - **[docs/DOCKER.md](docs/DOCKER.md)** - Guía completa de Docker
 - **[WEB_INTERFACE_GUIDE.md](WEB_INTERFACE_GUIDE.md)** - Guía de la interfaz web
 
+## 📊 Configuración de Insights (Nuevo!)
+
+- **[INSIGHTS_README.md](INSIGHTS_README.md)** - Comienza aquí! Guía de inicio rápido
+- **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Resumen de 1 página
+- **[INSIGHTS_EXECUTIVE_SUMMARY.md](INSIGHTS_EXECUTIVE_SUMMARY.md)** - Para no-técnicos
+- **[INSIGHTS_CONFIGURATION_GUIDE.md](INSIGHTS_CONFIGURATION_GUIDE.md)** - Guía completa de configuración
+- **[TESTING_GUIDE.md](TESTING_GUIDE.md)** - Cómo probar todas las funciones
+- **[INSIGHTS_CHANGES_SUMMARY.md](INSIGHTS_CHANGES_SUMMARY.md)** - Cambios técnicos realizados
+- **[VISUAL_TUTORIAL.md](VISUAL_TUTORIAL.md)** - Tutorial visual con imágenes ASCII
+- **[IMPLEMENTATION_COMPLETE.md](IMPLEMENTATION_COMPLETE.md)** - Resumen técnico de implementación
+- **[IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md)** - Resumen ejecutivo
+- **[VERIFICATION_CHECKLIST.md](VERIFICATION_CHECKLIST.md)** - Checklist de validación
+
 ## 🔧 Referencias Técnicas
 
 - **[DOCKER_SUMMARY.md](DOCKER_SUMMARY.md)** - Resumen de implementación Docker
@@ -74,6 +87,10 @@ ELTMKO/
 |-------------|-----------|
 | Iniciar el sistema | [DOCKER_QUICKSTART.md](DOCKER_QUICKSTART.md) |
 | Usar la interfaz web | [WEB_INTERFACE_GUIDE.md](WEB_INTERFACE_GUIDE.md) |
+| Configurar Insights | [INSIGHTS_EXECUTIVE_SUMMARY.md](INSIGHTS_EXECUTIVE_SUMMARY.md) |
+| Entender Insights en detalle | [INSIGHTS_CONFIGURATION_GUIDE.md](INSIGHTS_CONFIGURATION_GUIDE.md) |
+| Probar nueva funcionalidad | [TESTING_GUIDE.md](TESTING_GUIDE.md) |
+| Ver cambios técnicos | [INSIGHTS_CHANGES_SUMMARY.md](INSIGHTS_CHANGES_SUMMARY.md) |
 | Ver comandos Docker | [DOCKER_CHEATSHEET.md](DOCKER_CHEATSHEET.md) |
 | Entender arquitectura | [DOCKER_SUMMARY.md](DOCKER_SUMMARY.md) |
 | Desplegar en servidor | [DEPLOYMENT.md](DEPLOYMENT.md) |

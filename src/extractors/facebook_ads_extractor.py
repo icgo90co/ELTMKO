@@ -173,7 +173,10 @@ class FacebookAdsExtractor:
     def extract_insights(
         self,
         level: str = 'account',
-        date_range: int = 30,
+        date_range: int = None,
+        start_date: str = None,
+        end_date: str = None,
+        time_increment: str = 'daily',
         fields: List[str] = None
     ) -> pd.DataFrame:
         """
@@ -181,7 +184,10 @@ class FacebookAdsExtractor:
         
         Args:
             level: Aggregation level ('account', 'campaign', 'adset', 'ad')
-            date_range: Number of days to look back
+            date_range: Number of days to look back (alternative to start_date/end_date)
+            start_date: Start date in YYYY-MM-DD format
+            end_date: End date in YYYY-MM-DD format
+            time_increment: 'daily' (1) or 'monthly' (all_days)
             fields: List of fields to extract
             
         Returns:
@@ -216,20 +222,28 @@ class FacebookAdsExtractor:
             fields.append(AdsInsights.Field.ad_name)
         
         # Calculate date range
-        end_date = datetime.now().date()
-        start_date = end_date - timedelta(days=date_range)
+        if start_date is None or end_date is None:
+            date_range = date_range or 30
+            end_dt = datetime.now().date()
+            start_dt = end_dt - timedelta(days=date_range)
+        else:
+            start_dt = datetime.strptime(start_date, '%Y-%m-%d').date()
+            end_dt = datetime.strptime(end_date, '%Y-%m-%d').date()
+        
+        # Map time_increment
+        time_increment_value = 1 if time_increment == 'daily' else 'all_days'
         
         params = {
             'level': level,
             'time_range': {
-                'since': start_date.strftime('%Y-%m-%d'),
-                'until': end_date.strftime('%Y-%m-%d')
+                'since': start_dt.strftime('%Y-%m-%d'),
+                'until': end_dt.strftime('%Y-%m-%d')
             },
-            'time_increment': 1,  # Daily breakdown
+            'time_increment': time_increment_value,
         }
         
         try:
-            logger.info(f"Extracting insights from Facebook Ads (level={level}, date_range={date_range} days)...")
+            logger.info(f"Extracting insights from Facebook Ads (level={level}, dates={start_dt} to {end_dt}, granularity={time_increment})...")
             insights = self.ad_account.get_insights(fields=fields, params=params)
             
             data = []
@@ -284,11 +298,19 @@ class FacebookAdsExtractor:
         elif table_name == 'ads':
             return self.extract_ads(fields=fields if fields else None)
         elif table_name == 'insights':
-            date_range = table_config.get('date_range', 30)
+            # Extract insights with configuration
+            date_range = table_config.get('date_range')
+            start_date = table_config.get('start_date')
+            end_date = table_config.get('end_date')
             level = table_config.get('level', 'account')
+            time_increment = table_config.get('time_increment', 'daily')
+            
             return self.extract_insights(
                 level=level,
                 date_range=date_range,
+                start_date=start_date,
+                end_date=end_date,
+                time_increment=time_increment,
                 fields=fields if fields else None
             )
         else:

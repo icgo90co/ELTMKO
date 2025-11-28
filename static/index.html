@@ -457,7 +457,10 @@
         <div class="section">
             <div class="section-title">
                 <span>📋 Tablas Disponibles para Sincronizar</span>
-                <button class="btn btn-secondary" onclick="loadAvailableTables()">🔄 Actualizar</button>
+                <div>
+                    <button class="btn btn-primary" onclick="openInsightsModal()">📊 Configurar Insights</button>
+                    <button class="btn btn-secondary" onclick="loadAvailableTables()">🔄 Actualizar</button>
+                </div>
             </div>
             <div id="available-tables" class="loading">Cargando tablas disponibles...</div>
         </div>
@@ -546,6 +549,73 @@
                     <div class="form-actions">
                         <button type="submit" class="btn btn-primary">💾 Guardar Configuración</button>
                         <button type="button" class="btn btn-secondary" onclick="closeDestinationModal()">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Configuración de Insights -->
+    <div id="insightsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📊 Configuración de Insights</h2>
+                <span class="close" onclick="closeInsightsModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="insightsForm">
+                    <div class="form-group">
+                        <label>Dimensión (Nivel de Agregación):</label>
+                        <select id="insightsDimension" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                            <option value="account">Nivel de Cuenta</option>
+                            <option value="campaign">Por Campaña</option>
+                            <option value="adset">Por Conjunto de Anuncios</option>
+                            <option value="ad">Por Anuncio Individual</option>
+                        </select>
+                        <small style="color: #7f8c8d; display: block; margin-top: 5px;">Selecciona cómo deseas agrupar los datos</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Granularidad Temporal:</label>
+                        <select id="insightsTimeIncrement" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                            <option value="daily">Diario (un registro por día)</option>
+                            <option value="monthly">Mensual (un registro por mes)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Rango de Fechas:</label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div>
+                                <label style="font-size: 12px; color: #7f8c8d;">Fecha Inicio:</label>
+                                <input type="date" id="insightsStartDate">
+                            </div>
+                            <div>
+                                <label style="font-size: 12px; color: #7f8c8d;">Fecha Fin:</label>
+                                <input type="date" id="insightsEndDate">
+                            </div>
+                        </div>
+                        <small style="color: #7f8c8d; display: block; margin-top: 5px;">O especifica solo "Últimos días":</small>
+                        <input type="number" id="insightsDateRange" placeholder="30" min="1" max="365" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-top: 5px;">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Métricas a Incluir:</label>
+                        <div id="metricsCheckboxes" style="display: grid; gap: 8px;">
+                            <label><input type="checkbox" name="metric" value="impressions" checked> Impresiones</label>
+                            <label><input type="checkbox" name="metric" value="clicks" checked> Clics</label>
+                            <label><input type="checkbox" name="metric" value="spend" checked> Gasto</label>
+                            <label><input type="checkbox" name="metric" value="reach" checked> Alcance</label>
+                            <label><input type="checkbox" name="metric" value="ctr" checked> CTR (Tasa de Clics)</label>
+                            <label><input type="checkbox" name="metric" value="cpc" checked> CPC (Costo por Clic)</label>
+                            <label><input type="checkbox" name="metric" value="cpm" checked> CPM (Costo por Mil)</label>
+                            <label><input type="checkbox" name="metric" value="frequency" checked> Frecuencia</label>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">💾 Guardar Configuración</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeInsightsModal()">Cancelar</button>
                     </div>
                 </form>
             </div>
@@ -771,15 +841,28 @@
             document.getElementById('destinationModal').style.display = 'none';
         }
 
+        function openInsightsModal() {
+            document.getElementById('insightsModal').style.display = 'block';
+            loadCurrentInsightsConfig();
+        }
+
+        function closeInsightsModal() {
+            document.getElementById('insightsModal').style.display = 'none';
+        }
+
         // Close modal when clicking outside
         window.onclick = function(event) {
             const configModal = document.getElementById('configModal');
             const destModal = document.getElementById('destinationModal');
+            const insightsModal = document.getElementById('insightsModal');
             if (event.target == configModal) {
                 closeConfigModal();
             }
             if (event.target == destModal) {
                 closeDestinationModal();
+            }
+            if (event.target == insightsModal) {
+                closeInsightsModal();
             }
         }
 
@@ -964,6 +1047,66 @@
                 loadAvailableTables(); // Reload to reset
             }
         }
+
+        async function loadCurrentInsightsConfig() {
+            try {
+                const result = await apiCall('/api/insights/config');
+                if (result.success && result.data) {
+                    const config = result.data;
+                    document.getElementById('insightsDimension').value = config.level || 'account';
+                    document.getElementById('insightsTimeIncrement').value = config.time_increment || 'daily';
+                    document.getElementById('insightsStartDate').value = config.start_date || '';
+                    document.getElementById('insightsEndDate').value = config.end_date || '';
+                    document.getElementById('insightsDateRange').value = config.date_range || 30;
+                    
+                    // Set metrics checkboxes
+                    if (config.fields && config.fields.length > 0) {
+                        document.querySelectorAll('input[name="metric"]').forEach(checkbox => {
+                            checkbox.checked = config.fields.includes(checkbox.value);
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading insights config:', error);
+            }
+        }
+
+        // Handle insights form submission
+        document.getElementById('insightsForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const selectedMetrics = Array.from(
+                document.querySelectorAll('input[name="metric"]:checked')
+            ).map(cb => cb.value);
+
+            const configData = {
+                level: document.getElementById('insightsDimension').value,
+                time_increment: document.getElementById('insightsTimeIncrement').value,
+                start_date: document.getElementById('insightsStartDate').value || null,
+                end_date: document.getElementById('insightsEndDate').value || null,
+                date_range: parseInt(document.getElementById('insightsDateRange').value) || 30,
+                fields: selectedMetrics
+            };
+
+            try {
+                showAlert('Guardando configuración de insights...', 'success');
+                const result = await apiCall('/api/insights/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(configData)
+                });
+
+                if (result.success) {
+                    showAlert('Configuración de insights guardada exitosamente', 'success');
+                    closeInsightsModal();
+                    loadData();
+                } else {
+                    showAlert('Error al guardar configuración: ' + (result.error || 'Error desconocido'), 'error');
+                }
+            } catch (error) {
+                showAlert('Error: ' + error.message, 'error');
+            }
+        });
     </script>
 </body>
 </html>

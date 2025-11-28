@@ -7,6 +7,7 @@ from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 from datetime import datetime
 import os
+import yaml
 
 from src.core import ConfigManager, setup_logger
 from src.orchestrator import Orchestrator
@@ -445,6 +446,137 @@ def get_data_stats():
         })
     except Exception as e:
         logger.error(f"Error getting data stats: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/insights/config', methods=['GET', 'POST'])
+def insights_config():
+    """Get or update insights configuration"""
+    try:
+        if request.method == 'GET':
+            # Get current insights config
+            sources = config_manager.get_enabled_sources()
+            insights_config = {}
+            
+            for source in sources:
+                sync_config = source.get('sync', {})
+                tables = sync_config.get('tables', [])
+                
+                for table in tables:
+                    if table.get('name') == 'insights':
+                        insights_config = {
+                            'level': table.get('level', 'account'),
+                            'date_range': table.get('date_range'),
+                            'start_date': table.get('start_date'),
+                            'end_date': table.get('end_date'),
+                            'time_increment': table.get('time_increment', 'daily'),
+                            'fields': table.get('fields', [])
+                        }
+            
+            return jsonify({
+                'success': True,
+                'data': insights_config
+            })
+        
+        else:  # POST
+            data = request.get_json()
+            logger.info("API request: Updating insights configuration")
+            
+            # Update config.yaml
+            with open(config_manager.config_path, 'r') as f:
+                config = yaml.safe_load(f)
+            
+            # Find and update insights table config
+            for source in config.get('sources', []):
+                if source.get('type') == 'facebook_ads':
+                    for table in source.get('sync', {}).get('tables', []):
+                        if table.get('name') == 'insights':
+                            table['level'] = data.get('level', 'account')
+                            table['time_increment'] = data.get('time_increment', 'daily')
+                            
+                            if data.get('date_range'):
+                                table['date_range'] = data.get('date_range')
+                            if data.get('start_date'):
+                                table['start_date'] = data.get('start_date')
+                            if data.get('end_date'):
+                                table['end_date'] = data.get('end_date')
+                            
+                            if data.get('fields'):
+                                table['fields'] = data.get('fields')
+            
+            # Write back to file
+            with open(config_manager.config_path, 'w') as f:
+                yaml.dump(config, f, default_flow_style=False)
+            
+            # Reload configuration
+            config_manager.reload()
+            global orchestrator
+            orchestrator = Orchestrator(config_manager)
+            
+            return jsonify({
+                'success': True,
+                'message': 'Insights configuration updated successfully'
+            })
+    
+    except Exception as e:
+        logger.error(f"Error managing insights config: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/insights/available-fields', methods=['GET'])
+def insights_available_fields():
+    """Get available fields for insights"""
+    try:
+        available_fields = {
+            'dimensions': {
+                'account': {
+                    'label': 'Nivel de Cuenta',
+                    'description': 'Agregar todas las métricas a nivel de cuenta'
+                },
+                'campaign': {
+                    'label': 'Por Campaña',
+                    'description': 'Métricas desglosadas por cada campaña',
+                    'fields': ['campaign_id', 'campaign_name']
+                },
+                'adset': {
+                    'label': 'Por Conjunto de Anuncios',
+                    'description': 'Métricas por cada conjunto de anuncios',
+                    'fields': ['adset_id', 'adset_name', 'campaign_id']
+                },
+                'ad': {
+                    'label': 'Por Anuncio Individual',
+                    'description': 'Métricas por cada anuncio',
+                    'fields': ['ad_id', 'ad_name', 'adset_id', 'campaign_id']
+                }
+            },
+            'metrics': {
+                'impressions': {'label': 'Impresiones', 'description': 'Número de veces que se mostró el anuncio'},
+                'clicks': {'label': 'Clics', 'description': 'Número de clics en el anuncio'},
+                'spend': {'label': 'Gasto', 'description': 'Cantidad invertida'},
+                'reach': {'label': 'Alcance', 'description': 'Número único de personas que vieron el anuncio'},
+                'ctr': {'label': 'CTR', 'description': 'Tasa de clics (porcentaje)'},
+                'cpc': {'label': 'CPC', 'description': 'Costo por clic'},
+                'cpm': {'label': 'CPM', 'description': 'Costo por mil impresiones'},
+                'frequency': {'label': 'Frecuencia', 'description': 'Número promedio de veces que se mostró a cada persona'}
+            },
+            'time_increments': {
+                'daily': {'label': 'Diario', 'description': 'Un registro por día'},
+                'monthly': {'label': 'Mensual', 'description': 'Un registro por mes'}
+            }
+        }
+        
+        return jsonify({
+            'success': True,
+            'data': available_fields
+        })
+    except Exception as e:
+        logger.error(f"Error getting available fields: {e}")
         return jsonify({
             'success': False,
             'error': str(e)
