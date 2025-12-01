@@ -121,6 +121,11 @@ class MySQLLoader:
             placeholders = ", ".join(["%s"] * len(columns))
             columns_str = ", ".join([f"`{col}`" for col in columns])
             
+            # Log DataFrame info for debugging
+            logger.info(f"DataFrame columns before INSERT: {columns}")
+            logger.info(f"DataFrame shape: {df.shape}")
+            logger.info(f"DataFrame dtypes: {df.dtypes.to_dict()}")
+            
             if mode == 'replace':
                 # Truncate table before loading
                 cursor = self.connection.cursor()
@@ -322,15 +327,31 @@ class MySQLLoader:
             df = df.loc[:, ~df.columns.isna()]
             
             # Remove columns with invalid names (like 'nan', 'None', etc.)
+            invalid_names = {'nan', 'none', 'nat', '<na>', 'null', 'undefined'}
             valid_cols = []
+            
             for col in df.columns:
-                col_str = str(col).lower()
-                if col_str not in ['nan', 'none', 'nat', '<na>']:
-                    valid_cols.append(col)
+                # Convert to string and normalize
+                col_str = str(col).strip().lower()
+                
+                # Skip if it's an invalid name
+                if col_str in invalid_names:
+                    logger.warning(f"Skipping invalid column name: '{col}'")
+                    continue
+                
+                # Skip if it's empty
+                if not col_str or col_str == '':
+                    logger.warning(f"Skipping empty column name")
+                    continue
+                    
+                valid_cols.append(col)
+            
+            if len(valid_cols) == 0:
+                logger.error("No valid columns found after cleaning!")
+                return df
             
             df = df[valid_cols]
-            
-            logger.info(f"DataFrame cleaned: {len(valid_cols)} valid columns")
+            logger.info(f"DataFrame cleaned: {len(valid_cols)} valid columns out of {len(df.columns) + len(valid_cols) - len(valid_cols)}")
             
             return df
         except Exception as e:
