@@ -30,7 +30,63 @@ def init_app(config_path: str = "config/config.yaml"):
     setup_logger(config_manager.get_logging_config())
     orchestrator = Orchestrator(config_manager)
     
+    # Initialize Facebook Ads configuration from environment variables
+    _init_facebook_config_from_env()
+    
     logger.info("Web API initialized")
+
+
+def _init_facebook_config_from_env():
+    """Initialize Facebook Ads configuration from environment variables if not exists"""
+    try:
+        from src.loaders.mysql_loader import MySQLLoader
+        
+        # Get credentials from environment
+        app_id = os.getenv('FACEBOOK_APP_ID')
+        app_secret = os.getenv('FACEBOOK_APP_SECRET')
+        access_token = os.getenv('FACEBOOK_ACCESS_TOKEN')
+        ad_account_id = os.getenv('FACEBOOK_AD_ACCOUNT_ID')
+        
+        # Only proceed if all credentials are set
+        if not all([app_id, app_secret, access_token, ad_account_id]):
+            logger.info("Facebook credentials not fully configured in environment variables")
+            return
+        
+        # Connect to MySQL
+        mysql_config = config_manager.get_destination_config('mysql_main')
+        loader = MySQLLoader(mysql_config)
+        loader.ensure_connection()
+        
+        cursor = loader.connection.cursor()
+        
+        # Check if facebook_ads source already exists
+        cursor.execute("SELECT COUNT(*) FROM config_sources WHERE source_name = 'facebook_ads'")
+        exists = cursor.fetchone()[0] > 0
+        
+        if not exists:
+            logger.info("Initializing Facebook Ads configuration from environment variables...")
+            
+            # Insert Facebook Ads configuration
+            cursor.execute("""
+                INSERT INTO config_sources (source_name, source_type, config, is_active)
+                VALUES ('facebook_ads', 'facebook_ads', %s, 1)
+            """, (yaml.dump({
+                'app_id': app_id,
+                'app_secret': app_secret,
+                'access_token': access_token,
+                'ad_account_id': ad_account_id
+            }),))
+            
+            loader.connection.commit()
+            logger.info("✅ Facebook Ads configuration initialized successfully")
+        else:
+            logger.info("Facebook Ads configuration already exists in database")
+        
+        cursor.close()
+        loader.close()
+        
+    except Exception as e:
+        logger.warning(f"Could not initialize Facebook configuration from environment: {e}")
 
 
 # Serve static files
