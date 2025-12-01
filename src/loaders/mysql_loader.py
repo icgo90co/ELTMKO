@@ -269,8 +269,16 @@ class MySQLLoader:
             cursor.execute(f"SHOW COLUMNS FROM `{table_name}`")
             existing_columns = {row[0] for row in cursor.fetchall()}
             
+            logger.info(f"Table '{table_name}' has {len(existing_columns)} existing columns")
+            logger.info(f"DataFrame has {len(schema)} columns to check")
+            
             # Find missing columns
             missing_columns = set(schema.keys()) - existing_columns
+            
+            if missing_columns:
+                logger.info(f"Found {len(missing_columns)} missing columns to add")
+            else:
+                logger.info(f"No missing columns to add")
             
             # Add missing columns
             for col_name in missing_columns:
@@ -280,13 +288,13 @@ class MySQLLoader:
                 try:
                     cursor.execute(alter_query)
                     self.connection.commit()
-                    logger.info(f"Added column '{col_name}' to table '{table_name}'")
+                    logger.info(f"✅ Added column '{col_name}' ({col_type}) to table '{table_name}'")
                 except Error as e:
-                    logger.warning(f"Could not add column '{col_name}' to '{table_name}': {e}")
+                    logger.warning(f"❌ Could not add column '{col_name}' to '{table_name}': {e}")
             
             cursor.close()
         except Error as e:
-            logger.warning(f"Could not check for missing columns on '{table_name}': {e}")
+            logger.error(f"Could not check for missing columns on '{table_name}': {e}")
     
     def _remove_invalid_columns(self, table_name: str):
         """
