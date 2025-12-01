@@ -226,8 +226,16 @@ class FacebookAdsExtractor:
             start_dt = datetime.strptime(start_date, '%Y-%m-%d').date()
             end_dt = datetime.strptime(end_date, '%Y-%m-%d').date()
         
-        # Map time_increment
-        time_increment_value = 1 if time_increment == 'daily' else 'all_days'
+        # Map time_increment to Facebook API values
+        # 'daily' -> 1 (one row per day)
+        # 'monthly' -> 'monthly' (one row per month)
+        # 'all_days' -> 'all_days' (one row for entire period)
+        if time_increment == 'daily':
+            time_increment_value = 1
+        elif time_increment == 'monthly':
+            time_increment_value = 'monthly'
+        else:
+            time_increment_value = 'all_days'
         
         params = {
             'level': level,
@@ -239,7 +247,8 @@ class FacebookAdsExtractor:
         }
         
         try:
-            logger.info(f"Extracting insights from Facebook Ads (level={level}, dates={start_dt} to {end_dt}, granularity={time_increment})...")
+            logger.info(f"Extracting insights from Facebook Ads (level={level}, dates={start_dt} to {end_dt}, time_increment={time_increment_value})...")
+            logger.info(f"Date range: {(end_dt - start_dt).days + 1} days")
             insights = self.ad_account.get_insights(fields=fields, params=params)
             
             data = []
