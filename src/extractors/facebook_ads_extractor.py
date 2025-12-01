@@ -309,6 +309,12 @@ class FacebookAdsExtractor:
                 df['date_stop'] = pd.to_datetime(df['date_stop'])
             
             logger.info(f"Extracted {len(df)} insights records")
+            logger.info(f"DataFrame columns from extractor: {list(df.columns)}")
+            logger.info(f"DataFrame dtypes from extractor: {df.dtypes.to_dict()}")
+            
+            # Final check for 'nan' column
+            if 'nan' in [str(col).lower() for col in df.columns]:
+                logger.error(f"❌ FOUND 'nan' column in DataFrame! Columns: {list(df.columns)}")
             
             return df
             
