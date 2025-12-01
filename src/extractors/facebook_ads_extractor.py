@@ -52,6 +52,90 @@ class FacebookAdsExtractor:
             logger.error(f"Error initializing Facebook Ads API: {e}")
             raise
     
+    def _expand_action_fields(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Expand complex action fields (actions, cost_per_action_type, video_play_actions, etc.)
+        into individual columns
+        
+        Args:
+            df: DataFrame with JSON string columns
+            
+        Returns:
+            DataFrame with expanded action columns
+        """
+        # Common action types to extract
+        action_types_to_extract = [
+            'lead',  # Formularios de leads
+            'landing_page_view',  # Vistas de página de destino
+            'link_click',  # Clics en enlaces
+            'post_engagement',  # Interacciones con publicación
+            'page_engagement',  # Interacciones con página
+            'purchase',  # Compras
+            'add_to_cart',  # Agregar al carrito
+            'initiate_checkout',  # Iniciar pago
+            'complete_registration',  # Registro completado
+            'submit_application',  # Envío de solicitud
+            'schedule',  # Programaciones
+            'contact',  # Contactos
+            'customize_product',  # Personalizar producto
+            'donate',  # Donaciones
+            'find_location',  # Encontrar ubicación
+            'start_trial',  # Iniciar prueba
+            'subscribe',  # Suscripciones
+            'search',  # Búsquedas
+        ]
+        
+        # Fields to expand
+        fields_to_expand = {
+            'actions': 'action',  # Generates: action_lead, action_purchase, etc.
+            'cost_per_action_type': 'cost_per',  # Generates: cost_per_lead, cost_per_purchase, etc.
+            'video_play_actions': 'video',  # Generates: video_play, video_view, etc.
+        }
+        
+        for field_name, prefix in fields_to_expand.items():
+            if field_name not in df.columns:
+                continue
+            
+            logger.info(f"Expanding field: {field_name}")
+            
+            # Extract and expand
+            for idx, row_value in df[field_name].items():
+                if pd.isna(row_value) or not row_value:
+                    continue
+                
+                try:
+                    # Parse JSON string
+                    if isinstance(row_value, str):
+                        actions_list = json.loads(row_value)
+                    elif isinstance(row_value, list):
+                        actions_list = row_value
+                    else:
+                        continue
+                    
+                    # Extract each action type
+                    for action in actions_list:
+                        if not isinstance(action, dict):
+                            continue
+                        
+                        action_type = action.get('action_type', '')
+                        action_value = action.get('value', 0)
+                        
+                        # Create column name
+                        col_name = f"{prefix}_{action_type}"
+                        
+                        # Initialize column if it doesn't exist
+                        if col_name not in df.columns:
+                            df[col_name] = None
+                        
+                        # Set value
+                        df.at[idx, col_name] = action_value
+                        
+                except Exception as e:
+                    logger.debug(f"Error expanding {field_name} at row {idx}: {e}")
+                    continue
+        
+        return df
+    
     def extract_campaigns(self, fields: List[str] = None) -> pd.DataFrame:
         """
         Extract campaigns from Facebook Ads
@@ -306,6 +390,9 @@ class FacebookAdsExtractor:
                 normalized_data.append(normalized_record)
             
             df = pd.DataFrame(normalized_data)
+            
+            # Expand complex action fields BEFORE cleaning
+            df = self._expand_action_fields(df)
             
             # Final cleanup: Remove any NaN column names and invalid names
             # First remove columns where the name itself is NaN/None
