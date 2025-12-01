@@ -227,14 +227,16 @@ class FacebookAdsExtractor:
             end_dt = datetime.strptime(end_date, '%Y-%m-%d').date()
         
         # Map time_increment to Facebook API values
-        # 'daily' -> 1 (one row per day)
-        # 'monthly' -> 'monthly' (one row per month)
-        # 'all_days' -> 'all_days' (one row for entire period)
+        # 1 = one row per day
+        # 'monthly' = one row per month (but Facebook uses special format)
+        # 'all_days' = one row for entire period
         if time_increment == 'daily':
             time_increment_value = 1
         elif time_increment == 'monthly':
+            # Facebook agrupa por mes cuando usas 'monthly' pero devuelve date_start como primer día del mes
             time_increment_value = 'monthly'
         else:
+            # Sin breakdown - un solo registro para todo el período
             time_increment_value = 'all_days'
         
         params = {
@@ -247,15 +249,27 @@ class FacebookAdsExtractor:
         }
         
         try:
-            logger.info(f"Extracting insights from Facebook Ads (level={level}, dates={start_dt} to {end_dt}, time_increment={time_increment_value})...")
-            logger.info(f"Date range: {(end_dt - start_dt).days + 1} days")
+            logger.info(f"Extracting insights from Facebook Ads...")
+            logger.info(f"  Level: {level}")
+            logger.info(f"  Date range: {start_dt} to {end_dt} ({(end_dt - start_dt).days + 1} days)")
+            logger.info(f"  Time increment: {time_increment_value}")
+            logger.info(f"  Fields: {len(fields)} metrics")
+            
             insights = self.ad_account.get_insights(fields=fields, params=params)
+            
+            # Debug: contar resultados
+            insights_list = list(insights)
+            logger.info(f"  Facebook API returned {len(insights_list)} raw records")
+            
+            if not insights_list:
+                logger.warning("No data returned from Facebook API")
+                return pd.DataFrame()
             
             data = []
             all_keys = set()  # Track all unique keys
             
             # First pass: collect all insights and identify all keys
-            for insight in insights:
+            for insight in insights_list:
                 insight_dict = dict(insight)
                 
                 # Clean up complex types (lists, dicts) - convert to JSON strings
