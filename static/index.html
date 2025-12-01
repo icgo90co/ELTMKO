@@ -758,23 +758,61 @@
 
         async function runPipeline(sourceName) {
             try {
-                showAlert(`Ejecutando pipeline: ${sourceName}...`, 'success');
+                // Crear elemento de progreso
+                const progressId = 'progress-' + Date.now();
+                const progressHtml = `
+                    <div id="${progressId}" style="background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin: 10px 0;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                            <div style="width: 20px; height: 20px; border: 3px solid #f3f3f3; border-top: 3px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                            <span id="${progressId}-message" style="font-weight: 500;">Iniciando sincronización...</span>
+                        </div>
+                        <div style="width: 100%; background: #e0e0e0; height: 8px; border-radius: 4px; overflow: hidden;">
+                            <div id="${progressId}-bar" style="width: 0%; background: linear-gradient(90deg, #3498db, #2ecc71); height: 100%; transition: width 0.3s;"></div>
+                        </div>
+                    </div>
+                `;
                 
-                const result = await apiCall(`/api/pipelines/run/${sourceName}`, {
-                    method: 'POST'
-                });
+                // Insertar progreso
+                const container = document.querySelector('.container');
+                const progressDiv = document.createElement('div');
+                progressDiv.innerHTML = progressHtml;
+                container.insertBefore(progressDiv, container.firstChild);
                 
-                if (result.success && result.data.success) {
-                    showAlert(
-                        `Pipeline '${sourceName}' ejecutado exitosamente. Filas procesadas: ${result.data.rows || 0}`,
-                        'success'
-                    );
-                } else {
-                    showAlert(
-                        `Error al ejecutar pipeline '${sourceName}': ${result.data.error || 'Error desconocido'}`,
-                        'error'
-                    );
-                }
+                // Conectar a Server-Sent Events
+                const eventSource = new EventSource(`/api/pipelines/run/${sourceName}/stream`);
+                
+                eventSource.onmessage = function(event) {
+                    const data = JSON.parse(event.data);
+                    const messageEl = document.getElementById(`${progressId}-message`);
+                    const barEl = document.getElementById(`${progressId}-bar`);
+                    
+                    if (data.type === 'progress') {
+                        if (messageEl) messageEl.textContent = data.message;
+                        if (barEl && data.progress !== null) {
+                            barEl.style.width = data.progress + '%';
+                        }
+                    } else if (data.type === 'complete') {
+                        eventSource.close();
+                        if (barEl) barEl.style.width = '100%';
+                        setTimeout(() => {
+                            document.getElementById(progressId)?.remove();
+                            showAlert('✅ Sincronización completada: ' + data.result.rows + ' registros', 'success');
+                            loadData();
+                        }, 2000);
+                    } else if (data.type === 'error') {
+                        eventSource.close();
+                        setTimeout(() => {
+                            document.getElementById(progressId)?.remove();
+                            showAlert('❌ Error: ' + data.error, 'error');
+                        }, 2000);
+                    }
+                };
+                
+                eventSource.onerror = function() {
+                    eventSource.close();
+                    document.getElementById(progressId)?.remove();
+                    showAlert('Error de conexión', 'error');
+                };
                 
             } catch (error) {
                 showAlert(`Error: ${error.message}`, 'error');

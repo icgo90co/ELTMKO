@@ -3,7 +3,8 @@ Web API for ELT System Configuration
 Provides REST endpoints to manage sources, destinations, and pipelines
 """
 import logging
-from flask import Flask, jsonify, request, send_from_directory
+import json
+from flask import Flask, jsonify, request, send_from_directory, Response, stream_with_context
 from flask_cors import CORS
 from datetime import datetime
 import os
@@ -252,6 +253,72 @@ def run_pipeline(source_name):
             'success': False,
             'error': str(e)
         }), 500
+
+
+@app.route('/api/pipelines/run/<source_name>/stream', methods=['GET'])
+def run_pipeline_stream(source_name):
+    """Run pipeline with real-time progress updates using Server-Sent Events"""
+    import queue
+    import threading
+    
+    # Cola para comunicación entre threads
+    progress_queue = queue.Queue()
+    
+    def progress_callback(message, progress=None):
+        """Callback para enviar progreso"""
+        progress_queue.put({
+            'message': message,
+            'progress': progress
+        })
+    
+    def run_with_progress():
+        """Ejecuta el pipeline y envía progreso"""
+        try:
+            logger.info(f"API request: Running pipeline with progress for source '{source_name}'")
+            
+            # Modificar temporalmente el orchestrator para usar el callback
+            result = orchestrator.run_source_with_progress(source_name, progress_callback)
+            
+            progress_queue.put({
+                'done': True,
+                'success': True,
+                'result': result
+            })
+        except Exception as e:
+            logger.error(f"Error running pipeline: {e}")
+            progress_queue.put({
+                'done': True,
+                'success': False,
+                'error': str(e)
+            })
+    
+    def generate():
+        """Genera eventos SSE"""
+        # Iniciar pipeline en thread separado
+        thread = threading.Thread(target=run_with_progress)
+        thread.daemon = True
+        thread.start()
+        
+        # Enviar eventos de progreso
+        while True:
+            try:
+                event = progress_queue.get(timeout=30)
+                
+                if event.get('done'):
+                    if event.get('success'):
+                        yield f"data: {json.dumps({'type': 'complete', 'result': event.get('result')})}\n\n"
+                    else:
+                        yield f"data: {json.dumps({'type': 'error', 'error': event.get('error')})}\n\n"
+                    break
+                else:
+                    yield f"data: {json.dumps({'type': 'progress', 'message': event.get('message'), 'progress': event.get('progress')})}\n\n"
+            except queue.Empty:
+                # Timeout - enviar keepalive
+                yield f"data: {json.dumps({'type': 'keepalive'})}\n\n"
+        
+        thread.join(timeout=1)
+    
+    return Response(stream_with_context(generate()), mimetype='text/event-stream')
 
 
 @app.route('/api/config/reload', methods=['POST'])

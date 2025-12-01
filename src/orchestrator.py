@@ -120,6 +120,121 @@ class Pipeline:
                 'success': False,
                 'error': str(e)
             }
+    
+    def run_with_progress(self, progress_callback=None):
+        """Execute the ELT pipeline with progress callbacks"""
+        logger.info(f"Starting ELT pipeline: {self.source_name} -> {self.destination_name}")
+        
+        start_time = datetime.now()
+        total_rows = 0
+        
+        if progress_callback:
+            progress_callback("🚀 Iniciando sincronización...", 0)
+        
+        try:
+            # Connect to destination
+            if progress_callback:
+                progress_callback("📊 Conectando a base de datos...", 5)
+            self.loader.connect()
+            
+            # Get tables to sync from configuration
+            tables = self.source_config.get('sync', {}).get('tables', [])
+            total_tables = len(tables)
+            
+            if progress_callback:
+                progress_callback(f"📋 {total_tables} tablas por sincronizar", 10)
+            
+            for idx, table_config in enumerate(tables):
+                table_name = table_config.get('name')
+                progress_pct = 10 + (idx / total_tables) * 70  # 10-80% para las tablas
+                
+                try:
+                    if progress_callback:
+                        progress_callback(f"📥 Extrayendo: {table_name}...", progress_pct)
+                    
+                    logger.info(f"Processing table: {table_name}")
+                    
+                    # Extract data
+                    df = self.extractor.extract_table(table_config)
+                    
+                    if df.empty:
+                        logger.warning(f"No data extracted for table '{table_name}'")
+                        if progress_callback:
+                            progress_callback(f"⚠️  {table_name}: Sin datos", progress_pct + 5)
+                        continue
+                    
+                    if progress_callback:
+                        progress_callback(f"💾 Cargando {len(df)} registros de {table_name}...", progress_pct + 10)
+                    
+                    # Load data
+                    target_table = f"{self.source_type}_{table_name}"
+                    
+                    # Use upsert for tables with IDs, otherwise append
+                    if 'id' in df.columns:
+                        self.loader.upsert_dataframe(df, target_table, key_columns=['id'])
+                    else:
+                        self.loader.load_dataframe(df, target_table, mode='append')
+                    
+                    total_rows += len(df)
+                    
+                    if progress_callback:
+                        progress_callback(f"✅ {table_name}: {len(df)} registros", progress_pct + 15)
+                    
+                except Exception as e:
+                    logger.error(f"Error processing table '{table_name}': {e}")
+                    if progress_callback:
+                        progress_callback(f"❌ Error en {table_name}: {str(e)[:50]}", progress_pct)
+                    continue
+            
+            # Disconnect from destination
+            if progress_callback:
+                progress_callback("🔌 Desconectando...", 90)
+            self.loader.disconnect()
+            
+            duration = (datetime.now() - start_time).total_seconds()
+            logger.info(f"Pipeline completed successfully in {duration:.2f}s. Total rows: {total_rows}")
+            
+            if progress_callback:
+                progress_callback(f"🎉 Completado: {total_rows} registros en {duration:.1f}s", 100)
+            
+            return {
+                'success': True,
+                'rows': total_rows,
+                'duration': duration
+            }
+            
+        except Exception as e:
+            logger.error(f"Pipeline failed: {e}")
+            
+            if progress_callback:
+                progress_callback(f"❌ Error: {str(e)}", 0)
+            
+            # Ensure loader is disconnected
+            try:
+                self.loader.disconnect()
+            except:
+                pass
+            
+            return {
+                'success': False,
+                'error': str(e)
+            }
+    
+    def run_source_with_progress(self, source_name: str, progress_callback=None):
+        """Run specific source with progress"""
+        # Find source config
+        sources = self.config.get_enabled_sources()
+        source = next((s for s in sources if s['name'] == source_name), None)
+        
+        if not source:
+            raise ValueError(f"Source '{source_name}' not found or not enabled")
+        
+        # Create pipeline
+        dest_name = source.get('destination')
+        pipeline = Pipeline(self.config, source_name, dest_name)
+        
+        # Run with progress
+        return pipeline.run_with_progress(progress_callback)
 
 
 class Orchestrator:
