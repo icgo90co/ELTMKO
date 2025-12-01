@@ -113,6 +113,9 @@ class MySQLLoader:
             schema = self._infer_schema_from_dataframe(df)
             self.create_table_if_not_exists(table_name, schema)
             
+            # Remove invalid columns from MySQL table (like 'nan')
+            self._remove_invalid_columns(table_name)
+            
             # Prepare data for insertion
             columns = list(df.columns)
             placeholders = ", ".join(["%s"] * len(columns))
@@ -174,6 +177,9 @@ class MySQLLoader:
             
             # Add unique key constraint
             self.create_table_if_not_exists(table_name, schema)
+            
+            # Remove invalid columns from MySQL table (like 'nan')
+            self._remove_invalid_columns(table_name)
             
             # Add missing columns to existing table
             self._add_missing_columns(table_name, schema)
@@ -276,6 +282,39 @@ class MySQLLoader:
             cursor.close()
         except Error as e:
             logger.warning(f"Could not check for missing columns on '{table_name}': {e}")
+    
+    def _remove_invalid_columns(self, table_name: str):
+        """
+        Remove columns with invalid names (like 'nan', 'none', etc.)
+        
+        Args:
+            table_name: Table name
+        """
+        try:
+            cursor = self.connection.cursor()
+            
+            # Get existing columns
+            cursor.execute(f"DESC `{table_name}`")
+            existing_columns = [row[0] for row in cursor.fetchall()]
+            
+            # Find invalid columns
+            invalid_names = ['nan', 'none', 'nat', '<na>', 'null']
+            columns_to_remove = [col for col in existing_columns if col.lower() in invalid_names]
+            
+            # Remove invalid columns
+            for col_name in columns_to_remove:
+                alter_query = f"ALTER TABLE `{table_name}` DROP COLUMN `{col_name}`"
+                
+                try:
+                    cursor.execute(alter_query)
+                    self.connection.commit()
+                    logger.info(f"Removed invalid column '{col_name}' from table '{table_name}'")
+                except Error as e:
+                    logger.warning(f"Could not remove column '{col_name}' from '{table_name}': {e}")
+            
+            cursor.close()
+        except Error as e:
+            logger.warning(f"Could not check for invalid columns on '{table_name}': {e}")
     
     def _clean_dataframe(self, df: pd.DataFrame) -> pd.DataFrame:
         """
