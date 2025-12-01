@@ -1,56 +1,66 @@
-# ELT System Configuration
-
 destinations:
-  - name: "mysql_main"
-    type: "mysql"
-    enabled: true
-    config:
-      host: "${MYSQL_HOST}"
-      port: ${MYSQL_PORT}
-      user: "${MYSQL_USER}"
-      password: "${MYSQL_PASSWORD}"
-      database: "${MYSQL_DATABASE}"
-      
-sources:
-  - name: "facebook_ads"
-    type: "facebook_ads"
-    enabled: true
-    destination: "mysql_main"
-    config:
-      app_id: "${FACEBOOK_APP_ID}"
-      app_secret: "${FACEBOOK_APP_SECRET}"
-      access_token: "${FACEBOOK_ACCESS_TOKEN}"
-      ad_account_id: "${FACEBOOK_AD_ACCOUNT_ID}"
-    sync:
-      interval_minutes: 60
-      tables:
-        - name: "campaigns"
-          fields: ["id", "name", "status", "objective", "created_time", "updated_time"]
-        - name: "adsets"
-          fields: ["id", "name", "status", "campaign_id", "daily_budget", "lifetime_budget"]
-        - name: "ads"
-          fields: ["id", "name", "status", "adset_id"]
-        - name: "insights"
-          level: "campaign"
-          time_increment: "daily"
-          fields: [
-            "date_start",
-            "date_stop",
-            "impressions",
-            "clicks",
-            "spend",
-            "reach",
-            "ctr",
-            "cpc",
-            "cpm",
-            "frequency",
-            "actions",
-            "video_play_actions",
-            "inline_link_clicks"
-          ]
-          date_range: 30  # last 30 days
-
+- config:
+    database: ${MYSQL_DATABASE}
+    host: ${MYSQL_HOST}
+    password: ${MYSQL_PASSWORD}
+    port: ${MYSQL_PORT}
+    user: ${MYSQL_USER}
+  enabled: true
+  name: mysql_main
+  type: mysql
 logging:
-  level: "INFO"
-  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-  file: "logs/elt.log"
+  file: logs/elt.log
+  format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+  level: INFO
+sources:
+- config:
+    access_token: ${FACEBOOK_ACCESS_TOKEN}
+    ad_account_id: ${FACEBOOK_AD_ACCOUNT_ID}
+    app_id: ${FACEBOOK_APP_ID}
+    app_secret: ${FACEBOOK_APP_SECRET}
+  destination: mysql_main
+  enabled: true
+  name: facebook_ads
+  sync:
+    interval_minutes: 60
+    tables:
+    - fields:
+      - id
+      - name
+      - status
+      - objective
+      - created_time
+      - updated_time
+      name: campaigns
+    - fields:
+      - id
+      - name
+      - status
+      - campaign_id
+      - daily_budget
+      - lifetime_budget
+      name: adsets
+    - fields:
+      - id
+      - name
+      - status
+      - adset_id
+      name: ads
+    - end_date: '2025-12-01'
+      fields:
+      - clicks
+      - frequency
+      - impressions
+      - reach
+      - cpc
+      - cpm
+      - ctr
+      - spend
+      - actions
+      - video_play_actions
+      - inline_link_clicks
+      level: campaign
+      name: insights
+      start_date: '2025-10-01'
+      time_increment: daily
+  type: facebook_ads
