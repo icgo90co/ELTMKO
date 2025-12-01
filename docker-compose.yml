@@ -17,6 +17,7 @@ services:
     volumes:
       - ./config:/app/config
       - ./logs:/app/logs
+      - ./static:/app/static
     networks:
       - elt-network
     command: python api.py
