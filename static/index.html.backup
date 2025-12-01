@@ -530,125 +530,59 @@
         }
     </style>
 </head>
-<body class="font-display bg-background-light dark:bg-background-dark">
-    <div class="relative flex min-h-screen w-full">
-        <!-- SideNavBar -->
-        <aside class="flex h-screen w-64 flex-col bg-[#111318] p-4 sticky top-0">
-            <div class="flex flex-col gap-4">
-                <div class="flex items-center gap-3">
-                    <div class="bg-primary bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 flex items-center justify-center text-white text-xl font-bold">
-                        ELT
-                    </div>
-                    <div class="flex flex-col">
-                        <h1 class="text-white text-base font-medium leading-normal">ELT Platform</h1>
-                        <p class="text-[#9da6b9] text-sm font-normal leading-normal">Data Pipeline</p>
-                    </div>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔄 Sistema ELT</h1>
+            <p class="subtitle">Panel de Control y Configuración</p>
+        </header>
+
+        <div id="alerts"></div>
+
+        <div class="section">
+            <div class="section-title">
+                <span>📊 Pipelines Activos</span>
+                <div>
+                    <button class="btn btn-primary" onclick="runAllPipelines()">▶️ Ejecutar Todos</button>
+                    <button class="btn btn-secondary" onclick="loadData()">🔄 Actualizar</button>
                 </div>
-                <nav class="flex flex-col gap-2 mt-4">
-                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary text-white transition-colors" href="#">
-                        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">monitoring</span>
-                        <p class="text-sm font-medium leading-normal">Panel</p>
-                    </a>
-                    <a class="flex items-center gap-3 px-3 py-2 text-white/60 hover:text-white hover:bg-white/5 rounded-lg transition-colors" href="#" onclick="openConfigModal(); return false;">
-                        <span class="material-symbols-outlined">settings</span>
-                        <p class="text-sm font-medium leading-normal">Configuración</p>
-                    </a>
-                    <a class="flex items-center gap-3 px-3 py-2 text-white/60 hover:text-white hover:bg-white/5 rounded-lg transition-colors" href="#" onclick="openInsightsModal(); return false;">
-                        <span class="material-symbols-outlined">analytics</span>
-                        <p class="text-sm font-medium leading-normal">Insights</p>
-                    </a>
-                </nav>
             </div>
-            <div class="mt-auto flex flex-col gap-1">
-                <a class="flex items-center gap-3 px-3 py-2 text-white/60 hover:text-white hover:bg-white/5 rounded-lg transition-colors" href="#">
-                    <span class="material-symbols-outlined">help</span>
-                    <p class="text-sm font-medium leading-normal">Ayuda</p>
-                </a>
+            <div id="pipelines" class="loading">Cargando pipelines...</div>
+        </div>
+
+        <div class="grid">
+            <div class="section">
+                <div class="section-title">
+                    <span>📥 Fuentes de Datos</span>
+                    <button class="btn btn-primary" onclick="openConfigModal()">⚙️ Configurar</button>
+                </div>
+                <div id="sources" class="loading">Cargando fuentes...</div>
             </div>
-        </aside>
 
-        <!-- Main Content -->
-        <main class="flex-1 p-8 overflow-auto">
-            <div class="w-full max-w-7xl mx-auto">
-                <!-- Alerts -->
-                <div id="alerts" class="mb-6"></div>
-
-                <!-- PageHeading -->
-                <header class="flex flex-wrap justify-between items-center gap-3 mb-6">
-                    <h1 class="text-gray-900 dark:text-white text-4xl font-black leading-tight tracking-[-0.033em]">Panel de Control</h1>
-                    <div class="flex gap-2">
-                        <button onclick="runAllPipelines()" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
-                            <span class="material-symbols-outlined text-sm">play_arrow</span>
-                            Ejecutar Todos
-                        </button>
-                        <button onclick="loadData()" class="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-[#111318] border border-gray-200 dark:border-[#3b4354] text-gray-900 dark:text-white rounded-lg hover:bg-gray-50 dark:hover:bg-[#1a1f2e] transition-colors">
-                            <span class="material-symbols-outlined text-sm">refresh</span>
-                            Actualizar
-                        </button>
-                    </div>
-                </header>
-
-                <!-- Stats -->
-                <section id="synced-data" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                    <!-- Será llenado dinámicamente -->
-                </section>
-
-                <!-- Pipelines Section -->
-                <section class="mb-8">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-gray-900 dark:text-white text-[22px] font-bold leading-tight tracking-[-0.015em]">Pipelines Activos</h2>
-                    </div>
-                    <div id="pipelines" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <!-- Será llenado dinámicamente -->
-                    </div>
-                </section>
-
-                <!-- Sources and Destinations -->
-                <section class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                    <div>
-                        <div class="flex justify-between items-center mb-4">
-                            <h2 class="text-gray-900 dark:text-white text-[22px] font-bold leading-tight tracking-[-0.015em]">Fuentes de Datos</h2>
-                            <button onclick="openConfigModal()" class="p-2 text-gray-500 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg">
-                                <span class="material-symbols-outlined">settings</span>
-                            </button>
-                        </div>
-                        <div id="sources">
-                            <!-- Será llenado dinámicamente -->
-                        </div>
-                    </div>
-                    <div>
-                        <div class="flex justify-between items-center mb-4">
-                            <h2 class="text-gray-900 dark:text-white text-[22px] font-bold leading-tight tracking-[-0.015em]">Destinos</h2>
-                            <button onclick="openDestinationModal()" class="p-2 text-gray-500 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg">
-                                <span class="material-symbols-outlined">settings</span>
-                            </button>
-                        </div>
-                        <div id="destinations">
-                            <!-- Será llenado dinámicamente -->
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Available Tables -->
-                <section class="mb-8">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-gray-900 dark:text-white text-[22px] font-bold leading-tight tracking-[-0.015em]">Tablas Disponibles</h2>
-                        <div class="flex items-center gap-2">
-                            <button onclick="openInsightsModal()" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors text-sm">
-                                <span class="material-symbols-outlined text-sm">analytics</span>
-                                Configurar Insights
-                            </button>
-                            <button onclick="loadAvailableTables()" class="p-2 text-gray-500 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg">
-                                <span class="material-symbols-outlined">refresh</span>
-                            </button>
-                        </div>
-                    </div>
-                    <div id="available-tables" class="overflow-x-auto bg-white dark:bg-[#111318] rounded-xl border border-gray-200 dark:border-[#3b4354]">
-                        <!-- Será llenado dinámicamente -->
-                    </div>
-                </section>
+            <div class="section">
+                <div class="section-title">
+                    <span>📤 Destinos</span>
+                    <button class="btn btn-primary" onclick="openDestinationModal()">⚙️ Configurar</button>
+                </div>
+                <div id="destinations" class="loading">Cargando destinos...</div>
             </div>
-        </main>
+        </div>
+
+        <div class="section">
+            <div class="section-title">
+                <span>📋 Tablas Disponibles para Sincronizar</span>
+                <div>
+                    <button class="btn btn-primary" onclick="openInsightsModal()">📊 Configurar Insights</button>
+                    <button class="btn btn-secondary" onclick="loadAvailableTables()">🔄 Actualizar</button>
+                </div>
+            </div>
+            <div id="available-tables" class="loading">Cargando tablas disponibles...</div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">📊 Datos Sincronizados</div>
+            <div id="synced-data" class="loading">Cargando estadísticas...</div>
+        </div>
     </div>
 
     <!-- Modal de Configuración de Fuentes -->

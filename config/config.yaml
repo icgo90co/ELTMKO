@@ -46,7 +46,7 @@ sources:
       - status
       - adset_id
       name: ads
-    - end_date: '2025-12-01'
+    - end_date: '2025-09-30'
       fields:
       - clicks
       - frequency
@@ -62,6 +62,6 @@ sources:
       - inline_link_clicks
       level: campaign
       name: insights
-      start_date: '2025-08-01'
+      start_date: '2025-01-01'
       time_increment: monthly
   type: facebook_ads
