@@ -219,22 +219,6 @@ class Pipeline:
                 'success': False,
                 'error': str(e)
             }
-    
-    def run_source_with_progress(self, source_name: str, progress_callback=None):
-        """Run specific source with progress"""
-        # Find source config
-        sources = self.config.get_enabled_sources()
-        source = next((s for s in sources if s['name'] == source_name), None)
-        
-        if not source:
-            raise ValueError(f"Source '{source_name}' not found or not enabled")
-        
-        # Create pipeline
-        dest_name = source.get('destination')
-        pipeline = Pipeline(self.config, source_name, dest_name)
-        
-        # Run with progress
-        return pipeline.run_with_progress(progress_callback)
 
 
 class Orchestrator:
@@ -310,3 +294,18 @@ class Orchestrator:
             raise ValueError(f"Pipeline not found for source: {source_name}")
         
         return pipeline.run()
+    
+    def run_source_with_progress(self, source_name: str, progress_callback=None):
+        """
+        Execute pipeline for a specific source with progress tracking
+        
+        Args:
+            source_name: Name of the source to run
+            progress_callback: Function to call with progress updates (message, progress%)
+        """
+        pipeline = next((p for p in self.pipelines if p.source_name == source_name), None)
+        
+        if pipeline is None:
+            raise ValueError(f"Pipeline not found for source: {source_name}")
+        
+        return pipeline.run_with_progress(progress_callback)
