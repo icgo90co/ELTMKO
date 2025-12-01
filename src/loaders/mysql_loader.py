@@ -116,6 +116,9 @@ class MySQLLoader:
             # Remove invalid columns from MySQL table (like 'nan')
             self._remove_invalid_columns(table_name)
             
+            # Add missing columns to existing table (for schema evolution)
+            self._add_missing_columns(table_name, schema)
+            
             # Prepare data for insertion
             columns = list(df.columns)
             placeholders = ", ".join(["%s"] * len(columns))
