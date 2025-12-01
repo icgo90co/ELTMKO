@@ -4,6 +4,7 @@ Provides REST endpoints to manage sources, destinations, and pipelines
 """
 import logging
 import json
+import threading
 from flask import Flask, jsonify, request, send_from_directory, Response, stream_with_context
 from flask_cors import CORS
 from datetime import datetime
@@ -21,6 +22,10 @@ CORS(app)
 # Global variables
 config_manager = None
 orchestrator = None
+
+# Progress tracking
+progress_store = {}
+progress_lock = threading.Lock()
 
 
 def init_app(config_path: str = "config/config.yaml"):
@@ -318,7 +323,10 @@ def run_pipeline_stream(source_name):
         
         thread.join(timeout=1)
     
-    return Response(stream_with_context(generate()), mimetype='text/event-stream')
+    response = Response(stream_with_context(generate()), mimetype='text/event-stream')
+    response.headers['Cache-Control'] = 'no-cache'
+    response.headers['X-Accel-Buffering'] = 'no'
+    return response
 
 
 @app.route('/api/config/reload', methods=['POST'])
