@@ -818,16 +818,22 @@
 
         function showAlert(message, type = 'success') {
             const alertsDiv = document.getElementById('alerts');
-            const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
+            const bgColor = type === 'success' ? 'bg-green-100 dark:bg-green-800/30 text-green-800 dark:text-green-500 border-green-200 dark:border-green-700/50' : 'bg-red-100 dark:bg-red-800/30 text-red-800 dark:text-red-500 border-red-200 dark:border-red-700/50';
+            const icon = type === 'success' ? 'check_circle' : 'error';
             
             const alert = document.createElement('div');
-            alert.className = `alert ${alertClass}`;
-            alert.textContent = message;
+            alert.className = `flex items-center gap-3 px-4 py-3 rounded-lg border ${bgColor} mb-4`;
+            alert.innerHTML = `
+                <span class="material-symbols-outlined">${icon}</span>
+                <span>${message}</span>
+            `;
             
             alertsDiv.appendChild(alert);
             
             setTimeout(() => {
-                alert.remove();
+                alert.style.opacity = '0';
+                alert.style.transition = 'opacity 0.5s';
+                setTimeout(() => alert.remove(), 500);
             }, 5000);
         }
 
@@ -844,16 +850,17 @@
                 }
                 
                 container.innerHTML = pipelines.map(pipeline => `
-                    <div class="card">
-                        <div class="card-header">
-                            <div class="card-title">${pipeline.source} → ${pipeline.destination}</div>
-                            <button class="btn btn-success" onclick="runPipeline('${pipeline.source}')">
-                                ▶️ Ejecutar
-                            </button>
+                    <div class="bg-white dark:bg-[#111318] border border-gray-200 dark:border-[#3b4354] rounded-xl p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-gray-900 dark:text-white font-semibold text-lg">${pipeline.source}</h3>
+                            <span class="material-symbols-outlined text-gray-400 dark:text-gray-600">arrow_forward</span>
                         </div>
-                        <div class="card-body">
-                            <strong>Tipo:</strong> ${pipeline.source_type}<br>
-                        </div>
+                        <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">${pipeline.destination}</p>
+                        <p class="text-gray-500 dark:text-gray-500 text-xs mb-4">Tipo: ${pipeline.source_type}</p>
+                        <button onclick="runPipeline('${pipeline.source}')" class="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                            <span class="material-symbols-outlined text-sm">play_arrow</span>
+                            Ejecutar
+                        </button>
                     </div>
                 `).join('');
                 
@@ -876,19 +883,17 @@
                 }
                 
                 container.innerHTML = sources.map(source => {
-                    const statusClass = source.enabled ? 'badge-success' : 'badge-danger';
+                    const statusBg = source.enabled ? 'bg-green-100 dark:bg-green-800/30 text-green-800 dark:text-green-500' : 'bg-red-100 dark:bg-red-800/30 text-red-800 dark:text-red-500';
                     const statusText = source.enabled ? 'Activo' : 'Inactivo';
                     
                     return `
-                        <div class="card">
-                            <div class="card-header">
-                                <div class="card-title">${source.name}</div>
-                                <span class="badge ${statusClass}">${statusText}</span>
+                        <div class="bg-white dark:bg-[#111318] border border-gray-200 dark:border-[#3b4354] rounded-xl p-6 mb-4">
+                            <div class="flex justify-between items-center mb-3">
+                                <h3 class="text-gray-900 dark:text-white font-semibold">${source.name}</h3>
+                                <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium ${statusBg}">${statusText}</span>
                             </div>
-                            <div class="card-body">
-                                <strong>Tipo:</strong> ${source.type}<br>
-                                <strong>Destino:</strong> ${source.destination}
-                            </div>
+                            <p class="text-gray-600 dark:text-gray-400 text-sm"><strong>Tipo:</strong> ${source.type}</p>
+                            <p class="text-gray-600 dark:text-gray-400 text-sm"><strong>Destino:</strong> ${source.destination}</p>
                         </div>
                     `;
                 }).join('');
@@ -912,20 +917,18 @@
                 }
                 
                 container.innerHTML = destinations.map(dest => {
-                    const statusClass = dest.enabled ? 'badge-success' : 'badge-danger';
+                    const statusBg = dest.enabled ? 'bg-green-100 dark:bg-green-800/30 text-green-800 dark:text-green-500' : 'bg-red-100 dark:bg-red-800/30 text-red-800 dark:text-red-500';
                     const statusText = dest.enabled ? 'Activo' : 'Inactivo';
                     
                     return `
-                        <div class="card">
-                            <div class="card-header">
-                                <div class="card-title">${dest.name}</div>
-                                <span class="badge ${statusClass}">${statusText}</span>
+                        <div class="bg-white dark:bg-[#111318] border border-gray-200 dark:border-[#3b4354] rounded-xl p-6 mb-4">
+                            <div class="flex justify-between items-center mb-3">
+                                <h3 class="text-gray-900 dark:text-white font-semibold">${dest.name}</h3>
+                                <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium ${statusBg}">${statusText}</span>
                             </div>
-                            <div class="card-body">
-                                <strong>Tipo:</strong> ${dest.type}<br>
-                                ${dest.config && dest.config.database ? 
-                                    `<strong>Base de datos:</strong> ${dest.config.database}` : ''}
-                            </div>
+                            <p class="text-gray-600 dark:text-gray-400 text-sm"><strong>Tipo:</strong> ${dest.type}</p>
+                            ${dest.config && dest.config.database ? 
+                                `<p class="text-gray-600 dark:text-gray-400 text-sm"><strong>Base de datos:</strong> ${dest.config.database}</p>` : ''}
                         </div>
                     `;
                 }).join('');
@@ -941,23 +944,23 @@
                 // Crear elemento de progreso
                 const progressId = 'progress-' + Date.now();
                 const progressHtml = `
-                    <div id="${progressId}" class="progress-container">
-                        <div class="progress-header">
-                            <div class="spinner"></div>
-                            <div class="progress-message" id="${progressId}-message">Iniciando sincronización...</div>
+                    <div id="${progressId}" class="bg-white dark:bg-[#111318] border-l-4 border-primary rounded-xl p-6 shadow-lg mb-6">
+                        <div class="flex items-center gap-4 mb-4">
+                            <span class="material-symbols-outlined text-primary animate-spin text-2xl" id="${progressId}-spinner">progress_activity</span>
+                            <div class="progress-message text-gray-900 dark:text-white font-medium" id="${progressId}-message">Iniciando sincronización...</div>
                         </div>
-                        <div class="progress-bar-container">
-                            <div class="progress-bar" id="${progressId}-bar" style="width: 0%"></div>
+                        <div class="bg-gray-200 dark:bg-gray-700 h-2 rounded-full overflow-hidden">
+                            <div class="bg-primary h-full transition-all duration-300" id="${progressId}-bar" style="width: 0%"></div>
                         </div>
-                        <div class="progress-percent" id="${progressId}-percent">0%</div>
+                        <div class="mt-2 text-right text-sm font-medium text-gray-600 dark:text-gray-400" id="${progressId}-percent">0%</div>
                     </div>
                 `;
                 
-                // Insertar al inicio del container
-                const container = document.querySelector('.container');
+                // Insertar al inicio del main content
+                const main = document.querySelector('main');
                 const tempDiv = document.createElement('div');
                 tempDiv.innerHTML = progressHtml;
-                container.insertBefore(tempDiv.firstElementChild, container.firstChild);
+                main.insertBefore(tempDiv.firstElementChild, main.firstChild);
                 
                 const messageEl = document.getElementById(`${progressId}-message`);
                 const barEl = document.getElementById(`${progressId}-bar`);
@@ -1005,8 +1008,12 @@
                         if (percentEl) percentEl.textContent = '100%';
                         if (messageEl) {
                             messageEl.textContent = `✅ Completado: ${result.data.rows} registros en ${result.data.duration?.toFixed(1)}s`;
-                            const spinner = messageEl.parentElement.querySelector('.spinner');
-                            if (spinner) spinner.style.display = 'none';
+                            const spinner = document.getElementById(`${progressId}-spinner`);
+                            if (spinner) {
+                                spinner.classList.remove('animate-spin');
+                                spinner.textContent = 'check_circle';
+                                spinner.classList.add('text-green-500');
+                            }
                         }
                         
                         setTimeout(() => {
@@ -1029,8 +1036,12 @@
                     
                     if (messageEl) {
                         messageEl.textContent = `❌ Error: ${error.message}`;
-                        const spinner = messageEl.parentElement.querySelector('.spinner');
-                        if (spinner) spinner.style.display = 'none';
+                        const spinner = document.getElementById(`${progressId}-spinner`);
+                        if (spinner) {
+                            spinner.classList.remove('animate-spin');
+                            spinner.textContent = 'error';
+                            spinner.classList.add('text-red-500');
+                        }
                     }
                     
                     setTimeout(() => {
@@ -1229,30 +1240,48 @@
                 const container = document.getElementById('available-tables');
                 
                 if (!result.success || !result.data || result.data.length === 0) {
-                    container.innerHTML = '<div class="empty-state">No hay tablas disponibles</div>';
+                    container.innerHTML = '<div class="text-gray-500 dark:text-gray-400 text-center py-8">No hay tablas disponibles</div>';
                     return;
                 }
 
-                container.innerHTML = '<div class="table-list">' + result.data.map(table => `
-                    <div class="table-item">
-                        <div class="table-info">
-                            <div class="table-name">${table.name}</div>
-                            <div class="table-description">${table.description || 'Tabla de datos de Facebook Ads'}</div>
-                            <div class="table-fields">Campos: ${table.fields ? table.fields.join(', ') : 'N/A'}</div>
-                        </div>
-                        <div class="sync-toggle">
-                            <label class="toggle-switch">
-                                <input type="checkbox" ${table.enabled ? 'checked' : ''} 
-                                    onchange="toggleTable('${table.name}', this.checked)">
-                                <span class="toggle-slider"></span>
-                            </label>
-                        </div>
+                container.innerHTML = `
+                    <div class="overflow-x-auto bg-white dark:bg-[#111318] rounded-xl border border-gray-200 dark:border-[#3b4354]">
+                        <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                            <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700/20 dark:text-gray-400">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 font-medium">Tabla</th>
+                                    <th scope="col" class="px-6 py-3 font-medium">Descripción</th>
+                                    <th scope="col" class="px-6 py-3 font-medium">Campos</th>
+                                    <th scope="col" class="px-6 py-3 font-medium text-right">Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${result.data.map(table => `
+                                    <tr class="border-b border-gray-200 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-800/20">
+                                        <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">${table.name}</td>
+                                        <td class="px-6 py-4">${table.description || 'Tabla de datos de Facebook Ads'}</td>
+                                        <td class="px-6 py-4">${table.fields ? table.fields.slice(0, 3).join(', ') + (table.fields.length > 3 ? '...' : '') : 'N/A'}</td>
+                                        <td class="px-6 py-4 text-right">
+                                            <label class="relative inline-flex items-center cursor-pointer">
+                                                <input type="checkbox" ${table.enabled ? 'checked' : ''} 
+                                                    onchange="toggleTable('${table.name}', this.checked)"
+                                                    class="sr-only peer">
+                                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+                                            </label>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
                     </div>
-                `).join('') + '</div>';
+                `;
                 
             } catch (error) {
                 document.getElementById('available-tables').innerHTML = 
-                    `<div class="alert alert-error">Error: ${error.message}</div>`;
+                    `<div class="bg-red-100 dark:bg-red-800/30 text-red-800 dark:text-red-500 border border-red-200 dark:border-red-700/50 rounded-lg p-4 flex items-center gap-2">
+                        <span class="material-symbols-outlined">error</span>
+                        <span>Error: ${error.message}</span>
+                    </div>`;
             }
         }
 
@@ -1267,19 +1296,20 @@
                 }
 
                 const stats = result.data;
-                container.innerHTML = '<div class="data-stats">' + 
-                    Object.keys(stats).map(table => {
-                        const stat = stats[table];
-                        return `
-                            <div class="stat-card ${stat.count > 0 ? 'success' : ''}">
-                                <div class="table-name">${table}</div>
-                                <div class="stat-value">${stat.count || 0}</div>
-                                <div class="stat-label">registros</div>
-                                ${stat.last_sync ? `<div class="table-description">Última sync: ${new Date(stat.last_sync).toLocaleString()}</div>` : ''}
-                            </div>
-                        `;
-                    }).join('') + 
-                '</div>';
+                container.innerHTML = Object.keys(stats).map(table => {
+                    const stat = stats[table];
+                    const count = stat.count || 0;
+                    const changeColor = count > 0 ? 'text-[#0bda5e]' : 'text-gray-400 dark:text-gray-600';
+                    
+                    return `
+                        <div class="flex flex-col gap-2 rounded-xl p-6 bg-white dark:bg-[#111318] border border-gray-200 dark:border-[#3b4354]">
+                            <p class="text-gray-600 dark:text-white text-base font-medium leading-normal">${table}</p>
+                            <p class="text-gray-900 dark:text-white tracking-tight text-3xl font-bold leading-tight">${count.toLocaleString()}</p>
+                            <p class="${changeColor} text-base font-medium leading-normal">registros</p>
+                            ${stat.last_sync ? `<p class="text-gray-500 dark:text-gray-500 text-xs mt-2">Última sync: ${new Date(stat.last_sync).toLocaleString()}</p>` : ''}
+                        </div>
+                    `;
+                }).join('');
                 
             } catch (error) {
                 document.getElementById('synced-data').innerHTML = 
