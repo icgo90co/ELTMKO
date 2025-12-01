@@ -284,9 +284,17 @@ class FacebookAdsExtractor:
             
             df = pd.DataFrame(normalized_data)
             
-            # Final cleanup: Remove any NaN column names that might still exist
+            # Final cleanup: Remove any NaN column names and invalid names
+            # First remove columns where the name itself is NaN/None
             df = df.loc[:, ~df.columns.isna()]
-            df = df.loc[:, df.columns.astype(str).str.lower() != 'nan']
+            
+            # Then filter out columns with invalid string names
+            invalid_names = {'nan', 'none', 'nat', 'null', 'undefined'}
+            valid_columns = [
+                col for col in df.columns 
+                if str(col).strip().lower() not in invalid_names
+            ]
+            df = df[valid_columns]
             
             logger.info(f"DataFrame columns after cleaning: {list(df.columns)}")
             
