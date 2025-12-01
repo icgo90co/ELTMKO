@@ -243,6 +243,9 @@ class FacebookAdsExtractor:
             insights = self.ad_account.get_insights(fields=fields, params=params)
             
             data = []
+            all_keys = set()  # Track all unique keys
+            
+            # First pass: collect all insights and identify all keys
             for insight in insights:
                 insight_dict = dict(insight)
                 
@@ -265,16 +268,27 @@ class FacebookAdsExtractor:
                 
                 if cleaned_dict:  # Only add if there are valid fields
                     data.append(cleaned_dict)
+                    all_keys.update(cleaned_dict.keys())
             
             if not data:
                 logger.warning("No valid data extracted from insights")
                 return pd.DataFrame()
             
-            df = pd.DataFrame(data)
+            # Second pass: normalize all dicts to have the same keys (fill missing with None)
+            normalized_data = []
+            for record in data:
+                normalized_record = {}
+                for key in all_keys:
+                    normalized_record[key] = record.get(key, None)
+                normalized_data.append(normalized_record)
             
-            # Remove any NaN column names
+            df = pd.DataFrame(normalized_data)
+            
+            # Final cleanup: Remove any NaN column names that might still exist
             df = df.loc[:, ~df.columns.isna()]
-            df = df.loc[:, df.columns.astype(str) != 'nan']
+            df = df.loc[:, df.columns.astype(str).str.lower() != 'nan']
+            
+            logger.info(f"DataFrame columns after cleaning: {list(df.columns)}")
             
             # Convert numeric columns
             numeric_columns = ['impressions', 'clicks', 'spend', 'reach', 'frequency']

@@ -102,6 +102,13 @@ class MySQLLoader:
         self.ensure_connection()
         
         try:
+            # Clean DataFrame: remove NaN column names and columns with invalid names
+            df = self._clean_dataframe(df)
+            
+            if df.empty or len(df.columns) == 0:
+                logger.warning(f"DataFrame has no valid columns after cleaning")
+                return
+            
             # Infer schema from DataFrame
             schema = self._infer_schema_from_dataframe(df)
             self.create_table_if_not_exists(table_name, schema)
@@ -155,6 +162,13 @@ class MySQLLoader:
         self.ensure_connection()
         
         try:
+            # Clean DataFrame: remove NaN column names and columns with invalid names
+            df = self._clean_dataframe(df)
+            
+            if df.empty or len(df.columns) == 0:
+                logger.warning(f"DataFrame has no valid columns after cleaning")
+                return
+            
             # Infer schema and create table
             schema = self._infer_schema_from_dataframe(df)
             
@@ -262,6 +276,36 @@ class MySQLLoader:
             cursor.close()
         except Error as e:
             logger.warning(f"Could not check for missing columns on '{table_name}': {e}")
+    
+    def _clean_dataframe(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Clean DataFrame by removing invalid column names
+        
+        Args:
+            df: Pandas DataFrame to clean
+            
+        Returns:
+            Cleaned DataFrame with valid column names only
+        """
+        try:
+            # Remove columns with NaN names
+            df = df.loc[:, ~df.columns.isna()]
+            
+            # Remove columns with invalid names (like 'nan', 'None', etc.)
+            valid_cols = []
+            for col in df.columns:
+                col_str = str(col).lower()
+                if col_str not in ['nan', 'none', 'nat', '<na>']:
+                    valid_cols.append(col)
+            
+            df = df[valid_cols]
+            
+            logger.info(f"DataFrame cleaned: {len(valid_cols)} valid columns")
+            
+            return df
+        except Exception as e:
+            logger.warning(f"Error cleaning DataFrame: {e}")
+            return df
     
     def _infer_schema_from_dataframe(self, df: pd.DataFrame) -> Dict[str, str]:
         """

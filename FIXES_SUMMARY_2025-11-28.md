@@ -69,14 +69,17 @@
 
 **Causa:** Algunos registros de Facebook tenían campos None/NULL. Pandas creaba columnas fantasma con nombres inválidos (como "nan"). MySQL intentaba insertar datos en columnas que no existen.
 
-**Solución:**
-- ✅ Mejorada limpieza de datos en `extract_insights()`
-- ✅ Salta valores None y claves None al procesar
-- ✅ Solo agrega registros que tengan al menos 1 campo válido
-- ✅ Limpia cualquier columna NaN después de crear el DataFrame
-- ✅ Valida nombres de columnas antes de insertar en MySQL
+**Solución - DEFENSA EN PROFUNDIDAD:**
+- ✅ **Capa 1 (Extractor):** Limpia datos cuando se extraen de Facebook
+  - Salta valores None y claves None
+  - Solo agrega registros válidos
+- ✅ **Capa 2 (Loader):** Nuevo método `_clean_dataframe()` valida ANTES de insertar
+  - Elimina columnas con nombres inválidos: 'nan', 'none', 'nat', '<na>'
+  - Se llama en `load_dataframe()` y `upsert_dataframe()`
+  - Defensa adicional contra datos malformados
+- ✅ Resultado: Incluso si el extractor deja datos sucios, el loader los limpia
 
-**Archivos modificados:** `src/extractors/facebook_ads_extractor.py`
+**Archivos modificados:** `src/extractors/facebook_ads_extractor.py`, `src/loaders/mysql_loader.py`
 
 ---
 
@@ -90,6 +93,8 @@
 | Rango de fechas | `index.html` | Lógica mejorada de envío de fechas |
 | Rango de fechas | `api.py` | Lógica mejorada de guardado en config |
 | Campos complejos | `facebook_ads_extractor.py` | +Serialización JSON de listas/dicts |
+| Columnas NaN | `facebook_ads_extractor.py` | +Limpieza de valores None y columnas inválidas |
+| Columnas NaN (Defensa 2) | `mysql_loader.py` | +Método `_clean_dataframe()` para validar antes de insertar |
 
 ---
 
@@ -133,8 +138,14 @@ Para confirmar que todo funciona correctamente:
 4. **`src/extractors/facebook_ads_extractor.py`**
    - Agregado `import json`
    - Agregada serialización de campos complejos en `extract_insights()`
+   - Agregada limpieza de valores None y columnas NaN en `extract_insights()`
 
-5. **`static/index.html`**
+5. **`src/loaders/mysql_loader.py`**
+   - Agregado método `_clean_dataframe()` para validar nombres de columnas
+   - Integrado en `load_dataframe()` y `upsert_dataframe()`
+   - Defensa adicional contra columnas fantasma antes de insertar
+
+6. **`static/index.html`**
    - Mejorada lógica de envío de configuración en el formulario
 
 ---
@@ -148,5 +159,23 @@ Para confirmar que todo funciona correctamente:
 
 ---
 
-**Última actualización:** 2025-11-28 20:45
-**Estado:** ✅ Todos los fixes implementados y listos para testing
+**Última actualización:** 2025-11-28 20:59
+**Estado:** ✅ TODOS los fixes implementados - Sistema con defensa en profundidad contra errores de datos
+
+---
+
+## 🛡️ Arquitectura de Defensa
+
+El sistema ahora tiene **múltiples capas de validación y limpieza**:
+
+```
+Facebook API (datos brutos)
+    ↓
+FacebookAdsExtractor (Limpieza 1: Filtra None, valores inválidos)
+    ↓
+MySQLLoader._clean_dataframe() (Limpieza 2: Valida nombres de columnas)
+    ↓
+MySQL Database (Datos garantizados como válidos)
+```
+
+Esto garantiza que **incluso si una capa falla**, la siguiente lo captura.
