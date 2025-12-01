@@ -290,31 +290,22 @@ class MySQLLoader:
         Args:
             table_name: Table name
         """
-        try:
-            cursor = self.connection.cursor()
-            
-            # Get existing columns
-            cursor.execute(f"DESC `{table_name}`")
-            existing_columns = [row[0] for row in cursor.fetchall()]
-            
-            # Find invalid columns
-            invalid_names = ['nan', 'none', 'nat', '<na>', 'null']
-            columns_to_remove = [col for col in existing_columns if col.lower() in invalid_names]
-            
-            # Remove invalid columns
-            for col_name in columns_to_remove:
+        cursor = self.connection.cursor()
+        
+        # List of invalid column names to remove
+        invalid_names = ['nan', 'none', 'nat', 'null']
+        
+        for col_name in invalid_names:
+            try:
                 alter_query = f"ALTER TABLE `{table_name}` DROP COLUMN `{col_name}`"
-                
-                try:
-                    cursor.execute(alter_query)
-                    self.connection.commit()
-                    logger.info(f"Removed invalid column '{col_name}' from table '{table_name}'")
-                except Error as e:
-                    logger.warning(f"Could not remove column '{col_name}' from '{table_name}': {e}")
-            
-            cursor.close()
-        except Error as e:
-            logger.warning(f"Could not check for invalid columns on '{table_name}': {e}")
+                cursor.execute(alter_query)
+                self.connection.commit()
+                logger.info(f"Removed invalid column '{col_name}' from table '{table_name}'")
+            except Error as e:
+                # Column doesn't exist or can't be dropped - that's fine
+                pass
+        
+        cursor.close()
     
     def _clean_dataframe(self, df: pd.DataFrame) -> pd.DataFrame:
         """
