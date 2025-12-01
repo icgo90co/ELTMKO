@@ -1,31 +1,6 @@
 version: '3.8'
 
 services:
-  # Base de datos MySQL
-  mysql:
-    image: mysql:8.0
-    container_name: eltmko-mysql
-    restart: unless-stopped
-    env_file:
-      - .env.docker
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD:-rootpassword}
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-elt_data}
-      MYSQL_USER: ${MYSQL_USER:-eltuser}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-eltpassword}
-    ports:
-      - "${MYSQL_PORT:-3306}:3306"
-    volumes:
-      - mysql_data:/var/lib/mysql
-      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
-    networks:
-      - elt-network
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_PASSWORD:-rootpassword}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   # Aplicación ELT - API Web
   elt-api:
     build: .
@@ -41,9 +16,6 @@ services:
     volumes:
       - ./config:/app/config
       - ./logs:/app/logs
-    depends_on:
-      mysql:
-        condition: service_healthy
     networks:
       - elt-network
     command: python api.py
@@ -58,9 +30,6 @@ services:
     volumes:
       - ./config:/app/config
       - ./logs:/app/logs
-    depends_on:
-      mysql:
-        condition: service_healthy
     networks:
       - elt-network
     command: python main.py --mode scheduled
@@ -70,7 +39,3 @@ services:
 networks:
   elt-network:
     driver: bridge
-
-volumes:
-  mysql_data:
-    driver: local
