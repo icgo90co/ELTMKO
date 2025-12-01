@@ -540,6 +540,7 @@ def insights_config():
         else:  # POST
             data = request.get_json()
             logger.info("API request: Updating insights configuration")
+            logger.info(f"Received data: {data}")
             
             # Update config.yaml
             with open(config_manager.config_path, 'r') as f:
@@ -555,11 +556,13 @@ def insights_config():
                             
                             # Si el usuario proporciona fechas específicas, usarlas
                             if data.get('start_date') and data.get('end_date'):
+                                logger.info(f"Using date range: {data.get('start_date')} to {data.get('end_date')}")
                                 table['start_date'] = data.get('start_date')
                                 table['end_date'] = data.get('end_date')
                                 # Remover date_range si está usando fechas específicas
                                 table.pop('date_range', None)
                             else:
+                                logger.info(f"Using days back: {data.get('date_range', 30)} days")
                                 # Si no, usar date_range
                                 table['date_range'] = data.get('date_range', 30)
                                 # Remover start_date y end_date si está usando date_range
@@ -567,7 +570,10 @@ def insights_config():
                                 table.pop('end_date', None)
                             
                             if data.get('fields'):
+                                logger.info(f"Updated fields: {len(data.get('fields'))} metrics")
                                 table['fields'] = data.get('fields')
+                            
+                            logger.info(f"Final table config: level={table['level']}, time_increment={table['time_increment']}")
             
             # Write back to file
             with open(config_manager.config_path, 'w') as f:
