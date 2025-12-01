@@ -265,8 +265,8 @@ class MySQLLoader:
         try:
             cursor = self.connection.cursor()
             
-            # Get existing columns
-            cursor.execute(f"DESC `{table_name}`")
+            # Get existing columns using SHOW COLUMNS (safer than DESC)
+            cursor.execute(f"SHOW COLUMNS FROM `{table_name}`")
             existing_columns = {row[0] for row in cursor.fetchall()}
             
             # Find missing columns
@@ -291,26 +291,51 @@ class MySQLLoader:
     def _remove_invalid_columns(self, table_name: str):
         """
         Remove columns with invalid names (like 'nan', 'none', etc.)
+        Uses information_schema to avoid direct table access
         
         Args:
             table_name: Table name
         """
-        cursor = self.connection.cursor()
-        
-        # List of invalid column names to remove
-        invalid_names = ['nan', 'none', 'nat', 'null']
-        
-        for col_name in invalid_names:
-            try:
-                alter_query = f"ALTER TABLE `{table_name}` DROP COLUMN `{col_name}`"
-                cursor.execute(alter_query)
-                self.connection.commit()
-                logger.info(f"Removed invalid column '{col_name}' from table '{table_name}'")
-            except Error as e:
-                # Column doesn't exist or can't be dropped - that's fine
-                pass
-        
-        cursor.close()
+        try:
+            cursor = self.connection.cursor()
+            
+            # Get database name
+            cursor.execute("SELECT DATABASE()")
+            db_name = cursor.fetchone()[0]
+            
+            # List of invalid column names to remove
+            invalid_names = ['nan', 'none', 'nat', 'null', 'undefined']
+            
+            # Get columns with invalid names using information_schema
+            query = """
+                SELECT COLUMN_NAME 
+                FROM information_schema.COLUMNS 
+                WHERE TABLE_SCHEMA = %s 
+                AND TABLE_NAME = %s 
+                AND LOWER(COLUMN_NAME) IN (%s)
+            """ % (
+                f"'{db_name}'",
+                f"'{table_name}'",
+                ', '.join([f"'{name}'" for name in invalid_names])
+            )
+            
+            cursor.execute(query)
+            columns_to_drop = [row[0] for row in cursor.fetchall()]
+            
+            # Drop invalid columns
+            for col_name in columns_to_drop:
+                try:
+                    alter_query = f"ALTER TABLE `{table_name}` DROP COLUMN `{col_name}`"
+                    cursor.execute(alter_query)
+                    self.connection.commit()
+                    logger.info(f"Removed invalid column '{col_name}' from table '{table_name}'")
+                except Error as e:
+                    logger.warning(f"Could not remove column '{col_name}': {e}")
+            
+            cursor.close()
+            
+        except Exception as e:
+            logger.warning(f"Could not remove invalid columns from '{table_name}': {e}")
     
     def _clean_dataframe(self, df: pd.DataFrame) -> pd.DataFrame:
         """
