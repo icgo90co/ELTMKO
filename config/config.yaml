@@ -63,5 +63,5 @@ sources:
       level: campaign
       name: insights
       start_date: '2025-01-01'
-      time_increment: monthly
+      time_increment: daily
   type: facebook_ads
