@@ -800,16 +800,20 @@ def query_data():
             else:
                 select_clause = '*'
             
+            # Check if table has date columns
+            cursor.execute(f"SHOW COLUMNS FROM `{table_name}` LIKE 'date_start'")
+            has_date_columns = cursor.fetchone() is not None
+            
             # Build WHERE clause
             where_conditions = []
             params = []
             
-            # Date filters
-            if start_date:
+            # Date filters (only if table has date columns)
+            if start_date and has_date_columns:
                 where_conditions.append('`date_start` >= %s')
                 params.append(start_date)
             
-            if end_date:
+            if end_date and has_date_columns:
                 where_conditions.append('`date_stop` <= %s')
                 params.append(end_date)
             
@@ -901,16 +905,20 @@ def export_data():
             else:
                 select_clause = '*'
             
+            # Check if table has date columns
+            cursor.execute(f"SHOW COLUMNS FROM `{table_name}` LIKE 'date_start'")
+            has_date_columns = cursor.fetchone() is not None
+            
             # Build WHERE clause
             where_conditions = []
             params = []
             
-            # Date filters
-            if start_date:
+            # Date filters (only if table has date columns)
+            if start_date and has_date_columns:
                 where_conditions.append('`date_start` >= %s')
                 params.append(start_date)
             
-            if end_date:
+            if end_date and has_date_columns:
                 where_conditions.append('`date_stop` <= %s')
                 params.append(end_date)
             
