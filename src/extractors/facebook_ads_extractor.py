@@ -273,7 +273,9 @@ class FacebookAdsExtractor:
         Returns:
             DataFrame with insights data
         """
+        # Prepare fields list
         if fields is None:
+            # Default fields if none specified
             fields = [
                 AdsInsights.Field.date_start,
                 AdsInsights.Field.date_stop,
@@ -286,20 +288,38 @@ class FacebookAdsExtractor:
                 AdsInsights.Field.cpm,
                 AdsInsights.Field.frequency,
             ]
+        else:
+            # Convert fields to list and make a copy to avoid modifying the original
+            fields = list(fields) if not isinstance(fields, list) else fields.copy()
         
-        # Add ID fields based on level
+        # Ensure date fields are always included (required for time series)
+        if AdsInsights.Field.date_start not in fields and 'date_start' not in fields:
+            fields.insert(0, AdsInsights.Field.date_start)
+        if AdsInsights.Field.date_stop not in fields and 'date_stop' not in fields:
+            fields.insert(1, AdsInsights.Field.date_stop)
+        
+        # Add ID and name fields based on level (for grouping/identification)
         if level == 'campaign':
-            fields.append(AdsInsights.Field.campaign_id)
-            fields.append(AdsInsights.Field.campaign_name)
+            if AdsInsights.Field.campaign_id not in fields and 'campaign_id' not in fields:
+                fields.append(AdsInsights.Field.campaign_id)
+            if AdsInsights.Field.campaign_name not in fields and 'campaign_name' not in fields:
+                fields.append(AdsInsights.Field.campaign_name)
         elif level == 'adset':
-            fields.append(AdsInsights.Field.campaign_id)
-            fields.append(AdsInsights.Field.adset_id)
-            fields.append(AdsInsights.Field.adset_name)
+            if AdsInsights.Field.campaign_id not in fields and 'campaign_id' not in fields:
+                fields.append(AdsInsights.Field.campaign_id)
+            if AdsInsights.Field.adset_id not in fields and 'adset_id' not in fields:
+                fields.append(AdsInsights.Field.adset_id)
+            if AdsInsights.Field.adset_name not in fields and 'adset_name' not in fields:
+                fields.append(AdsInsights.Field.adset_name)
         elif level == 'ad':
-            fields.append(AdsInsights.Field.campaign_id)
-            fields.append(AdsInsights.Field.adset_id)
-            fields.append(AdsInsights.Field.ad_id)
-            fields.append(AdsInsights.Field.ad_name)
+            if AdsInsights.Field.campaign_id not in fields and 'campaign_id' not in fields:
+                fields.append(AdsInsights.Field.campaign_id)
+            if AdsInsights.Field.adset_id not in fields and 'adset_id' not in fields:
+                fields.append(AdsInsights.Field.adset_id)
+            if AdsInsights.Field.ad_id not in fields and 'ad_id' not in fields:
+                fields.append(AdsInsights.Field.ad_id)
+            if AdsInsights.Field.ad_name not in fields and 'ad_name' not in fields:
+                fields.append(AdsInsights.Field.ad_name)
         
         # Calculate date range
         if start_date is None or end_date is None:
