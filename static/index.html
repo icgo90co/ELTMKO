@@ -540,6 +540,10 @@
                         <span class="material-symbols-outlined">analytics</span>
                         <p class="text-sm font-medium leading-normal">Insights</p>
                     </a>
+                    <a class="flex items-center gap-3 px-3 py-2 text-white/60 hover:text-white hover:bg-white/5 rounded-lg transition-colors" href="#" onclick="openExportModal(); return false;">
+                        <span class="material-symbols-outlined">download</span>
+                        <p class="text-sm font-medium leading-normal">Exportar Datos</p>
+                    </a>
                 </nav>
             </div>
             <div class="mt-auto flex flex-col gap-1">
@@ -560,6 +564,10 @@
                 <header class="flex flex-wrap justify-between items-center gap-3 mb-6">
                     <h1 class="text-gray-900 dark:text-white text-4xl font-black leading-tight tracking-[-0.033em]">Panel de Control</h1>
                     <div class="flex gap-2">
+                        <button onclick="openExportModal()" class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                            <span class="material-symbols-outlined text-sm">download</span>
+                            Exportar Datos
+                        </button>
                         <button onclick="runAllPipelines()" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
                             <span class="material-symbols-outlined text-sm">play_arrow</span>
                             Ejecutar Todos
@@ -776,6 +784,94 @@
                         <button type="button" class="btn btn-secondary" onclick="closeInsightsModal()">Cancelar</button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Exportación de Datos -->
+    <div id="exportModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h2>📥 Exportar Datos con Filtros</h2>
+                <span class="close" onclick="closeExportModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="exportForm">
+                    <div class="form-group">
+                        <label>Tabla a Exportar:</label>
+                        <select id="exportTable" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;" onchange="loadTableColumns()">
+                            <option value="">Selecciona una tabla...</option>
+                            <option value="facebook_ads_campaigns">Campañas</option>
+                            <option value="facebook_ads_adsets">Conjuntos de Anuncios</option>
+                            <option value="facebook_ads_ads">Anuncios</option>
+                            <option value="facebook_ads_insights">Insights / Métricas</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Filtrar por Fechas:</label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div>
+                                <label style="font-size: 12px; color: #7f8c8d;">Fecha Inicio:</label>
+                                <input type="date" id="exportStartDate" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                            </div>
+                            <div>
+                                <label style="font-size: 12px; color: #7f8c8d;">Fecha Fin:</label>
+                                <input type="date" id="exportEndDate" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                            </div>
+                        </div>
+                        <small style="color: #7f8c8d; display: block; margin-top: 5px;">Aplica solo a tablas con campos date_start/date_stop</small>
+                    </div>
+
+                    <div class="form-group" id="columnsSection" style="display: none;">
+                        <label>Columnas a Incluir:</label>
+                        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                            <button type="button" onclick="selectAllColumns()" class="btn btn-secondary" style="flex: 1;">Seleccionar Todas</button>
+                            <button type="button" onclick="deselectAllColumns()" class="btn btn-secondary" style="flex: 1;">Deseleccionar Todas</button>
+                        </div>
+                        <div id="columnsCheckboxes" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; max-height: 300px; overflow-y: auto; padding: 10px; border: 1px solid #ecf0f1; border-radius: 5px; background: #f8f9fa;">
+                            <div style="grid-column: 1/-1; color: #7f8c8d; text-align: center;">Selecciona una tabla primero...</div>
+                        </div>
+                    </div>
+
+                    <div class="form-group" id="filtersSection" style="display: none;">
+                        <label>Filtros Adicionales:</label>
+                        <div id="additionalFilters" style="display: flex; flex-direction: column; gap: 10px;">
+                            <!-- Filtros dinámicos se agregarán aquí -->
+                        </div>
+                        <button type="button" onclick="addFilter()" class="btn btn-secondary" style="margin-top: 10px;">+ Agregar Filtro</button>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Límite de Registros:</label>
+                        <input type="number" id="exportLimit" value="10000" min="1" max="100000" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                        <small style="color: #7f8c8d; display: block; margin-top: 5px;">Máximo 100,000 registros</small>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" onclick="previewData()" class="btn btn-secondary" style="flex: 1;">
+                            <span style="display: inline-flex; align-items: center; gap: 5px;">
+                                <span class="material-symbols-outlined" style="font-size: 16px;">visibility</span>
+                                Vista Previa
+                            </span>
+                        </button>
+                        <button type="submit" class="btn btn-success" style="flex: 2;">
+                            <span style="display: inline-flex; align-items: center; gap: 5px;">
+                                <span class="material-symbols-outlined" style="font-size: 16px;">download</span>
+                                Descargar CSV
+                            </span>
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="closeExportModal()">Cancelar</button>
+                    </div>
+                </form>
+
+                <!-- Preview Section -->
+                <div id="previewSection" style="display: none; margin-top: 20px; padding-top: 20px; border-top: 2px solid #ecf0f1;">
+                    <h3 style="color: #2c3e50; margin-bottom: 10px;">Vista Previa de Datos:</h3>
+                    <div id="previewData" style="overflow-x: auto; max-height: 400px; border: 1px solid #ddd; border-radius: 5px;">
+                        <!-- Preview table will be inserted here -->
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -1453,6 +1549,259 @@
                 showAlert('Error: ' + error.message, 'error');
             }
         });
+
+        // ===== EXPORT MODAL FUNCTIONS =====
+        
+        let availableColumns = [];
+
+        function openExportModal() {
+            document.getElementById('exportModal').style.display = 'block';
+            // Set default dates to last 30 days
+            const endDate = new Date();
+            const startDate = new Date();
+            startDate.setDate(startDate.getDate() - 30);
+            
+            document.getElementById('exportEndDate').valueAsDate = endDate;
+            document.getElementById('exportStartDate').valueAsDate = startDate;
+        }
+
+        function closeExportModal() {
+            document.getElementById('exportModal').style.display = 'none';
+            document.getElementById('previewSection').style.display = 'none';
+        }
+
+        async function loadTableColumns() {
+            const tableName = document.getElementById('exportTable').value;
+            
+            if (!tableName) {
+                document.getElementById('columnsSection').style.display = 'none';
+                document.getElementById('filtersSection').style.display = 'none';
+                return;
+            }
+
+            try {
+                const result = await apiCall(`/api/tables/${tableName}/columns`);
+                
+                if (result.success) {
+                    availableColumns = result.data;
+                    
+                    const container = document.getElementById('columnsCheckboxes');
+                    container.innerHTML = result.data.map(col => {
+                        // Pre-select important columns
+                        const autoSelect = !col.name.startsWith('_elt_');
+                        return `
+                            <label style="font-size: 13px; display: flex; align-items: center; gap: 8px; cursor: pointer;" title="${col.type}">
+                                <input type="checkbox" name="column" value="${col.name}" ${autoSelect ? 'checked' : ''}>
+                                <span>${col.name}</span>
+                            </label>
+                        `;
+                    }).join('');
+                    
+                    document.getElementById('columnsSection').style.display = 'block';
+                    document.getElementById('filtersSection').style.display = 'block';
+                }
+            } catch (error) {
+                showAlert('Error al cargar columnas: ' + error.message, 'error');
+            }
+        }
+
+        function selectAllColumns() {
+            document.querySelectorAll('#columnsCheckboxes input[type="checkbox"]').forEach(cb => cb.checked = true);
+        }
+
+        function deselectAllColumns() {
+            document.querySelectorAll('#columnsCheckboxes input[type="checkbox"]').forEach(cb => cb.checked = false);
+        }
+
+        function addFilter() {
+            const filtersContainer = document.getElementById('additionalFilters');
+            const filterId = 'filter_' + Date.now();
+            
+            const filterHtml = `
+                <div id="${filterId}" style="display: flex; gap: 10px; align-items: center;">
+                    <select class="filter-field" style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 5px;">
+                        <option value="">Selecciona un campo...</option>
+                        ${availableColumns.map(col => `<option value="${col.name}">${col.name}</option>`).join('')}
+                    </select>
+                    <input type="text" class="filter-value" placeholder="Valor" style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 5px;">
+                    <button type="button" onclick="document.getElementById('${filterId}').remove()" class="btn btn-secondary" style="padding: 8px 12px;">
+                        <span class="material-symbols-outlined" style="font-size: 18px;">close</span>
+                    </button>
+                </div>
+            `;
+            
+            filtersContainer.insertAdjacentHTML('beforeend', filterHtml);
+        }
+
+        async function previewData() {
+            const tableName = document.getElementById('exportTable').value;
+            
+            if (!tableName) {
+                showAlert('Por favor selecciona una tabla', 'error');
+                return;
+            }
+
+            const selectedColumns = Array.from(
+                document.querySelectorAll('#columnsCheckboxes input[name="column"]:checked')
+            ).map(cb => cb.value);
+
+            const filters = {};
+            document.querySelectorAll('#additionalFilters > div').forEach(filterDiv => {
+                const field = filterDiv.querySelector('.filter-field').value;
+                const value = filterDiv.querySelector('.filter-value').value;
+                if (field && value) {
+                    filters[field] = value;
+                }
+            });
+
+            const queryData = {
+                table: tableName,
+                columns: selectedColumns.length > 0 ? selectedColumns : undefined,
+                start_date: document.getElementById('exportStartDate').value || undefined,
+                end_date: document.getElementById('exportEndDate').value || undefined,
+                filters: filters,
+                limit: 10  // Preview only shows 10 rows
+            };
+
+            try {
+                showAlert('Cargando vista previa...', 'success');
+                
+                const result = await apiCall('/api/data/query', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(queryData)
+                });
+
+                if (result.success) {
+                    displayPreview(result.data);
+                    document.getElementById('previewSection').style.display = 'block';
+                    showAlert(`Vista previa cargada: ${result.count} registros de muestra`, 'success');
+                } else {
+                    showAlert('Error en la vista previa: ' + result.error, 'error');
+                }
+            } catch (error) {
+                showAlert('Error: ' + error.message, 'error');
+            }
+        }
+
+        function displayPreview(data) {
+            const container = document.getElementById('previewData');
+            
+            if (!data || data.length === 0) {
+                container.innerHTML = '<p style="padding: 20px; text-align: center; color: #7f8c8d;">No hay datos para mostrar con los filtros seleccionados</p>';
+                return;
+            }
+
+            const columns = Object.keys(data[0]);
+            
+            let tableHtml = '<table style="width: 100%; border-collapse: collapse; font-size: 12px;">';
+            tableHtml += '<thead><tr>';
+            columns.forEach(col => {
+                tableHtml += `<th style="padding: 10px; background: #34495e; color: white; text-align: left; border: 1px solid #2c3e50; position: sticky; top: 0;">${col}</th>`;
+            });
+            tableHtml += '</tr></thead><tbody>';
+            
+            data.forEach((row, idx) => {
+                const bgColor = idx % 2 === 0 ? '#f8f9fa' : 'white';
+                tableHtml += `<tr style="background: ${bgColor};">`;
+                columns.forEach(col => {
+                    let value = row[col];
+                    if (value === null || value === undefined) value = '';
+                    if (typeof value === 'string' && value.length > 50) {
+                        value = value.substring(0, 50) + '...';
+                    }
+                    tableHtml += `<td style="padding: 8px; border: 1px solid #ddd;">${value}</td>`;
+                });
+                tableHtml += '</tr>';
+            });
+            
+            tableHtml += '</tbody></table>';
+            container.innerHTML = tableHtml;
+        }
+
+        // Handle export form submission
+        document.getElementById('exportForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const tableName = document.getElementById('exportTable').value;
+            
+            if (!tableName) {
+                showAlert('Por favor selecciona una tabla', 'error');
+                return;
+            }
+
+            const selectedColumns = Array.from(
+                document.querySelectorAll('#columnsCheckboxes input[name="column"]:checked')
+            ).map(cb => cb.value);
+
+            const filters = {};
+            document.querySelectorAll('#additionalFilters > div').forEach(filterDiv => {
+                const field = filterDiv.querySelector('.filter-field').value;
+                const value = filterDiv.querySelector('.filter-value').value;
+                if (field && value) {
+                    filters[field] = value;
+                }
+            });
+
+            const exportData = {
+                table: tableName,
+                columns: selectedColumns.length > 0 ? selectedColumns : undefined,
+                start_date: document.getElementById('exportStartDate').value || undefined,
+                end_date: document.getElementById('exportEndDate').value || undefined,
+                filters: filters
+            };
+
+            try {
+                showAlert('Exportando datos...', 'success');
+                
+                const response = await fetch(`${API_BASE}/api/data/export`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(exportData)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Error en la exportación');
+                }
+
+                // Get the blob and download it
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                
+                // Get filename from Content-Disposition header or create one
+                const contentDisposition = response.headers.get('Content-Disposition');
+                let filename = `${tableName}_${new Date().toISOString().split('T')[0]}.csv`;
+                if (contentDisposition) {
+                    const filenameMatch = contentDisposition.match(/filename="?(.+)"?/);
+                    if (filenameMatch) {
+                        filename = filenameMatch[1];
+                    }
+                }
+                
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+                showAlert('¡Datos exportados exitosamente!', 'success');
+                closeExportModal();
+            } catch (error) {
+                showAlert('Error al exportar: ' + error.message, 'error');
+            }
+        });
+
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            const exportModal = document.getElementById('exportModal');
+            if (event.target === exportModal) {
+                closeExportModal();
+            }
+        };
     </script>
 </body>
 </html>

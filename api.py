@@ -761,6 +761,276 @@ def insights_available_fields():
         }), 500
 
 
+@app.route('/api/data/query', methods=['POST'])
+def query_data():
+    """Query data from a table with filters"""
+    try:
+        data = request.get_json()
+        table_name = data.get('table')
+        columns = data.get('columns', [])
+        start_date = data.get('start_date')
+        end_date = data.get('end_date')
+        filters = data.get('filters', {})
+        limit = data.get('limit', 1000)
+        
+        if not table_name:
+            return jsonify({
+                'success': False,
+                'error': 'Table name is required'
+            }), 400
+        
+        # Get MySQL connection
+        destinations = config_manager.get_destinations()
+        if not destinations:
+            return jsonify({
+                'success': False,
+                'error': 'No destination configured'
+            }), 400
+        
+        from src.loaders import MySQLLoader
+        loader = MySQLLoader(destinations[0].get('config', {}))
+        loader.connect()
+        
+        try:
+            cursor = loader.connection.cursor(dictionary=True)
+            
+            # Build SELECT clause
+            if columns:
+                select_clause = ', '.join([f'`{col}`' for col in columns])
+            else:
+                select_clause = '*'
+            
+            # Build WHERE clause
+            where_conditions = []
+            params = []
+            
+            # Date filters
+            if start_date:
+                where_conditions.append('`date_start` >= %s')
+                params.append(start_date)
+            
+            if end_date:
+                where_conditions.append('`date_stop` <= %s')
+                params.append(end_date)
+            
+            # Custom filters
+            for field, value in filters.items():
+                if value is not None and value != '':
+                    where_conditions.append(f'`{field}` = %s')
+                    params.append(value)
+            
+            # Build query
+            query = f"SELECT {select_clause} FROM `{table_name}`"
+            
+            if where_conditions:
+                query += ' WHERE ' + ' AND '.join(where_conditions)
+            
+            query += f' LIMIT {int(limit)}'
+            
+            logger.info(f"Executing query: {query}")
+            logger.info(f"Parameters: {params}")
+            
+            cursor.execute(query, params)
+            results = cursor.fetchall()
+            
+            # Convert datetime objects to strings
+            for row in results:
+                for key, value in row.items():
+                    if isinstance(value, datetime):
+                        row[key] = value.isoformat()
+            
+            cursor.close()
+            loader.disconnect()
+            
+            return jsonify({
+                'success': True,
+                'data': results,
+                'count': len(results)
+            })
+            
+        except Exception as e:
+            loader.disconnect()
+            raise e
+            
+    except Exception as e:
+        logger.error(f"Error querying data: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/data/export', methods=['POST'])
+def export_data():
+    """Export data to CSV with filters"""
+    try:
+        import io
+        import csv
+        
+        data = request.get_json()
+        table_name = data.get('table')
+        columns = data.get('columns', [])
+        start_date = data.get('start_date')
+        end_date = data.get('end_date')
+        filters = data.get('filters', {})
+        
+        if not table_name:
+            return jsonify({
+                'success': False,
+                'error': 'Table name is required'
+            }), 400
+        
+        # Get MySQL connection
+        destinations = config_manager.get_destinations()
+        if not destinations:
+            return jsonify({
+                'success': False,
+                'error': 'No destination configured'
+            }), 400
+        
+        from src.loaders import MySQLLoader
+        loader = MySQLLoader(destinations[0].get('config', {}))
+        loader.connect()
+        
+        try:
+            cursor = loader.connection.cursor(dictionary=True)
+            
+            # Build SELECT clause
+            if columns:
+                select_clause = ', '.join([f'`{col}`' for col in columns])
+            else:
+                select_clause = '*'
+            
+            # Build WHERE clause
+            where_conditions = []
+            params = []
+            
+            # Date filters
+            if start_date:
+                where_conditions.append('`date_start` >= %s')
+                params.append(start_date)
+            
+            if end_date:
+                where_conditions.append('`date_stop` <= %s')
+                params.append(end_date)
+            
+            # Custom filters
+            for field, value in filters.items():
+                if value is not None and value != '':
+                    where_conditions.append(f'`{field}` = %s')
+                    params.append(value)
+            
+            # Build query
+            query = f"SELECT {select_clause} FROM `{table_name}`"
+            
+            if where_conditions:
+                query += ' WHERE ' + ' AND '.join(where_conditions)
+            
+            logger.info(f"Exporting data with query: {query}")
+            
+            cursor.execute(query, params)
+            results = cursor.fetchall()
+            
+            if not results:
+                return jsonify({
+                    'success': False,
+                    'error': 'No data found with the specified filters'
+                }), 404
+            
+            # Create CSV in memory
+            output = io.StringIO()
+            
+            # Get column names from first row
+            fieldnames = list(results[0].keys())
+            writer = csv.DictWriter(output, fieldnames=fieldnames)
+            
+            writer.writeheader()
+            
+            # Write data, converting datetime objects
+            for row in results:
+                row_data = {}
+                for key, value in row.items():
+                    if isinstance(value, datetime):
+                        row_data[key] = value.isoformat()
+                    else:
+                        row_data[key] = value
+                writer.writerow(row_data)
+            
+            cursor.close()
+            loader.disconnect()
+            
+            # Prepare response
+            output.seek(0)
+            csv_data = output.getvalue()
+            
+            return Response(
+                csv_data,
+                mimetype='text/csv',
+                headers={
+                    'Content-Disposition': f'attachment; filename={table_name}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
+                }
+            )
+            
+        except Exception as e:
+            loader.disconnect()
+            raise e
+            
+    except Exception as e:
+        logger.error(f"Error exporting data: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/tables/<table_name>/columns', methods=['GET'])
+def get_table_columns(table_name):
+    """Get columns from a specific table"""
+    try:
+        destinations = config_manager.get_destinations()
+        if not destinations:
+            return jsonify({
+                'success': False,
+                'error': 'No destination configured'
+            }), 400
+        
+        from src.loaders import MySQLLoader
+        loader = MySQLLoader(destinations[0].get('config', {}))
+        loader.connect()
+        
+        try:
+            cursor = loader.connection.cursor()
+            cursor.execute(f"DESCRIBE `{table_name}`")
+            columns_info = cursor.fetchall()
+            
+            columns = [{
+                'name': col[0],
+                'type': col[1],
+                'nullable': col[2] == 'YES',
+                'key': col[3],
+                'default': col[4]
+            } for col in columns_info]
+            
+            cursor.close()
+            loader.disconnect()
+            
+            return jsonify({
+                'success': True,
+                'data': columns
+            })
+            
+        except Exception as e:
+            loader.disconnect()
+            raise e
+            
+    except Exception as e:
+        logger.error(f"Error getting table columns: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
 def run_api(host='0.0.0.0', port=5000):
     """Run the Flask API server"""
     app.run(host=host, port=port, debug=False)
