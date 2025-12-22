@@ -350,13 +350,13 @@ class MySQLLoader:
     
     def _clean_dataframe(self, df: pd.DataFrame) -> pd.DataFrame:
         """
-        Clean DataFrame by removing invalid column names
+        Clean DataFrame by removing invalid column names and replacing NaN values
         
         Args:
             df: Pandas DataFrame to clean
             
         Returns:
-            Cleaned DataFrame with valid column names only
+            Cleaned DataFrame with valid column names only and NaN values replaced
         """
         try:
             # Remove columns with NaN names
@@ -387,7 +387,13 @@ class MySQLLoader:
                 return df
             
             df = df[valid_cols]
-            logger.info(f"DataFrame cleaned: {len(valid_cols)} valid columns out of {len(df.columns) + len(valid_cols) - len(valid_cols)}")
+            
+            # Replace all NaN, None, and pd.NA values with None (SQL NULL)
+            # This is crucial to avoid "Unknown column 'nan'" errors
+            df = df.replace({pd.NA: None, pd.NaT: None, float('nan'): None})
+            df = df.where(pd.notna(df), None)
+            
+            logger.info(f"DataFrame cleaned: {len(valid_cols)} valid columns, NaN values replaced with NULL")
             
             return df
         except Exception as e:
